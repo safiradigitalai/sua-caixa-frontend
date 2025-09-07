@@ -1,0 +1,279 @@
+/* Import styles */
+@import url('./styles/box-animation.css');
+@import url('./styles/casino-royale.css');
+@import url('./styles/brutalist-vegas.css');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==============================================
+   GLOBAL STYLES - MOBILE FIRST
+   ============================================== */
+
+@layer base {
+  /* Reset and base styles */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  html {
+    touch-action: manipulation;
+    scroll-behavior: smooth;
+    /* Prevent horizontal scroll on mobile */
+    overflow-x: hidden;
+    /* Better font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Prevent zoom on input focus (iOS) */
+    -webkit-text-size-adjust: 100%;
+  }
+  
+  body {
+    background: #000000;
+    color: #FFFFFF;
+    overflow-x: hidden;
+    /* Prevent rubber band scrolling on iOS */
+    overscroll-behavior-y: none;
+    /* Support for safe areas */
+    padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  }
+  
+  /* Input styling for better mobile UX */
+  input, textarea, select {
+    font-size: 16px; /* Prevent zoom on iOS */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+  
+  /* Better button defaults */
+  button {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+  
+  /* Improved focus states for accessibility */
+  :focus-visible {
+    outline: 2px solid #D4AF37;
+    outline-offset: 2px;
+  }
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #171717;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #D4AF37;
+    border-radius: 9999px;
+  }
+}
+
+/* ==============================================
+   COMPONENT PATTERNS - Simplified
+   ============================================== */
+
+@layer components {
+  /* Button variants - Direct CSS */
+  .btn-primary {
+    background: linear-gradient(135deg, #FFD700, #FF8C00);
+    color: #000000;
+    font-weight: bold;
+    padding: 16px 24px;
+    border: 4px solid #000000;
+    box-shadow: 6px 6px 0 #000000;
+    transition: all 150ms ease-out;
+    cursor: pointer;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'Anton', 'Impact', sans-serif;
+  }
+  
+  .btn-primary:active {
+    transform: translate(3px, 3px);
+    box-shadow: 3px 3px 0 #000000;
+  }
+  
+  .btn-secondary {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    color: #FFD700;
+    font-weight: 500;
+    padding: 16px 24px;
+    border-radius: 16px;
+    transition: all 150ms ease-out;
+    cursor: pointer;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .btn-secondary:hover {
+    border-color: #FFD700;
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.4);
+  }
+  
+  .btn-secondary:active {
+    transform: scale(0.95);
+  }
+  
+  .btn-ghost {
+    color: #FFD700;
+    font-weight: 500;
+    padding: 12px 16px;
+    border-radius: 8px;
+    transition: all 150ms ease-out;
+    cursor: pointer;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .btn-ghost:hover {
+    background: rgba(255, 215, 0, 0.1);
+    text-shadow: 0 0 10px currentColor;
+  }
+  
+  .btn-ghost:active {
+    transform: scale(0.95);
+  }
+  
+  /* Card patterns */
+  .card {
+    background: #2D2D2D;
+    border: 1px solid #4B5563;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .card-interactive {
+    background: #2D2D2D;
+    border: 1px solid #4B5563;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 150ms ease-out;
+  }
+  
+  .card-interactive:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+  
+  .card-interactive:hover {
+    border-color: rgba(212, 175, 55, 0.5);
+  }
+  
+  /* Input patterns */
+  .input-primary {
+    background: #2D2D2D;
+    border: 1px solid #6B7280;
+    color: white;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 16px;
+    transition: border-color 150ms ease-out;
+  }
+  
+  .input-primary::placeholder {
+    color: #9CA3AF;
+  }
+  
+  .input-primary:focus {
+    border-color: #D4AF37;
+    outline: 1px solid #D4AF37;
+  }
+  
+  /* Loading states */
+  .skeleton {
+    background: linear-gradient(90deg, #374151, #6B7280, #374151);
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  
+  /* Status badges */
+  .badge-success {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22C55E;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  .badge-warning {
+    background: rgba(212, 175, 55, 0.2);
+    color: #D4AF37;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  .badge-error {
+    background: rgba(239, 68, 68, 0.2);
+    color: #EF4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  /* Bottom navigation safe area */
+  .pb-safe {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ==============================================
+   UTILITIES
+   ============================================== */
+
+@layer utilities {
+  .text-gradient-gold {
+    background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .min-h-touch-min {
+    min-height: 44px;
+  }
+  
+  .active\:scale-95:active {
+    transform: scale(0.95);
+  }
+  
+  .active\:scale-98:active {
+    transform: scale(0.98);
+  }
+}

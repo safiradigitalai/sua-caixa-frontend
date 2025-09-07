@@ -1,0 +1,573 @@
+/* ==============================================
+   BRUTALIST VEGAS - Estética EXPLOSIVA
+   ============================================== */
+
+/* Import fonts ousadas */
+@import url('https://fonts.googleapis.com/css2?family=Anton:wght@400&family=Impact&family=Bebas+Neue&family=Racing+Sans+One&display=swap');
+
+/* ==============================================
+   ROOT VARIABLES
+   ============================================== */
+:root {
+  /* Vegas Neons */
+  --neon-pink: #FF007F;
+  --neon-lime: #00FF41;
+  --neon-cyan: #00FFFF;
+  --neon-purple: #8A2BE2;
+  --neon-orange: #FF4500;
+  --neon-yellow: #FFFF00;
+  
+  /* Vegas Colors */
+  --vegas-gold: #FFD700;
+  --vegas-red: #DC143C;
+  --vegas-black: #000000;
+  --vegas-white: #FFFFFF;
+  
+  /* Brutalist */
+  --brutal-black: #000000;
+  --brutal-white: #FFFFFF;
+  --brutal-red: #FF0000;
+  --brutal-blue: #0000FF;
+  --brutal-yellow: #FFFF00;
+  --brutal-green: #00FF00;
+  
+  /* Chip Colors */
+  --chip-white: #F8F8FF;
+  --chip-red: #DC143C;
+  --chip-green: #006400;
+  --chip-black: #2F4F4F;
+  --chip-purple: #800080;
+  --chip-yellow: #FFD700;
+}
+
+/* ==============================================
+   BASE STYLES - BRUTAL VEGAS
+   ============================================== */
+body {
+  background: var(--brutal-black);
+  position: relative;
+  overflow-x: hidden;
+  font-family: 'Anton', 'Impact', sans-serif;
+}
+
+/* Padrão de fundo Vegas com fichas animadas */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    /* Fichas de poker */
+    radial-gradient(circle at 15% 25%, var(--chip-red) 3px, transparent 3px),
+    radial-gradient(circle at 85% 15%, var(--chip-green) 2px, transparent 2px),
+    radial-gradient(circle at 25% 75%, var(--chip-yellow) 2px, transparent 2px),
+    radial-gradient(circle at 75% 85%, var(--chip-purple) 3px, transparent 3px),
+    /* Padrão de naipes */
+    repeating-linear-gradient(45deg, transparent, transparent 100px, rgba(220, 20, 60, 0.05) 100px, rgba(220, 20, 60, 0.05) 120px),
+    repeating-linear-gradient(-45deg, transparent, transparent 80px, rgba(255, 215, 0, 0.03) 80px, rgba(255, 215, 0, 0.03) 100px);
+  background-size: 200px 200px, 150px 150px, 180px 180px, 160px 160px, 120px 120px, 100px 100px;
+  animation: casinoPattern 20s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes casinoPattern {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(50px, 50px); }
+}
+
+/* ==============================================
+   TIPOGRAFIA BRUTALIST VEGAS
+   ============================================== */
+.text-vegas-title {
+  font-family: 'Anton', 'Impact', sans-serif;
+  font-size: clamp(32px, 8vw, 80px);
+  line-height: 0.8;
+  letter-spacing: -2px;
+  text-transform: uppercase;
+  font-weight: 400;
+  
+  /* Efeito neon múltiplo */
+  color: var(--neon-pink);
+  text-shadow: 
+    0 0 5px var(--neon-pink),
+    0 0 10px var(--neon-pink),
+    0 0 15px var(--neon-pink),
+    0 0 20px var(--neon-pink),
+    4px 4px 0 var(--brutal-black),
+    8px 8px 0 var(--neon-cyan);
+  
+  animation: neonFlicker 2s ease-in-out infinite alternate;
+}
+
+.text-vegas-subtitle {
+  font-family: 'Racing Sans One', cursive;
+  font-size: clamp(18px, 4vw, 28px);
+  color: var(--vegas-gold);
+  text-shadow: 
+    0 0 10px var(--vegas-gold),
+    2px 2px 0 var(--brutal-black);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.text-brutal-price {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(24px, 6vw, 48px);
+  color: var(--brutal-white);
+  text-shadow: 
+    4px 4px 0 var(--neon-lime),
+    8px 8px 0 var(--brutal-black);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.text-neon-flicker {
+  animation: neonFlicker 1.5s ease-in-out infinite alternate;
+}
+
+/* ==============================================
+   BOTÕES BRUTALIST VEGAS
+   ============================================== */
+.btn-vegas-primary {
+  background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+  color: var(--brutal-white);
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(14px, 3vw, 18px);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 16px 24px;
+  border: 4px solid var(--brutal-black);
+  box-shadow: 
+    6px 6px 0 var(--brutal-black),
+    0 0 20px var(--neon-pink);
+  transform: rotate(-1deg);
+  transition: all 0.15s ease-out;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-vegas-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.5s ease-out;
+}
+
+.btn-vegas-primary:hover {
+  transform: rotate(0deg) scale(1.05);
+  box-shadow: 
+    8px 8px 0 var(--brutal-black),
+    0 0 30px var(--neon-pink),
+    0 0 40px var(--neon-purple);
+  animation: brutalShake 0.5s ease-in-out;
+}
+
+.btn-vegas-primary:hover::before {
+  left: 100%;
+}
+
+.btn-vegas-primary:active {
+  transform: translate(3px, 3px) rotate(1deg);
+  box-shadow: 
+    3px 3px 0 var(--brutal-black),
+    0 0 15px var(--neon-pink);
+}
+
+.btn-vegas-secondary {
+  background: var(--brutal-black);
+  color: var(--neon-lime);
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(12px, 2.5vw, 16px);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 12px 20px;
+  border: 3px solid var(--neon-lime);
+  box-shadow: 
+    0 0 20px var(--neon-lime),
+    inset 0 0 20px rgba(0, 255, 65, 0.1);
+  transition: all 0.2s ease-out;
+  cursor: pointer;
+}
+
+.btn-vegas-secondary:hover {
+  background: var(--neon-lime);
+  color: var(--brutal-black);
+  box-shadow: 
+    0 0 30px var(--neon-lime),
+    4px 4px 0 var(--brutal-black);
+  animation: neonGlow 0.3s ease-out;
+}
+
+/* ==============================================
+   CARDS BRUTALIST VEGAS
+   ============================================== */
+.card-vegas-brutal {
+  background: var(--brutal-black);
+  border: 4px solid;
+  position: relative;
+  overflow: hidden;
+  transform: rotate(-0.5deg);
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  cursor: pointer;
+}
+
+/* Variações de cores para os cards */
+.card-vegas-brutal.variant-pink {
+  border-color: var(--neon-pink);
+  box-shadow: 
+    8px 8px 0 var(--neon-pink),
+    0 0 30px var(--neon-pink);
+}
+
+.card-vegas-brutal.variant-lime {
+  border-color: var(--neon-lime);
+  box-shadow: 
+    8px 8px 0 var(--neon-lime),
+    0 0 30px var(--neon-lime);
+}
+
+.card-vegas-brutal.variant-cyan {
+  border-color: var(--neon-cyan);
+  box-shadow: 
+    8px 8px 0 var(--neon-cyan),
+    0 0 30px var(--neon-cyan);
+}
+
+.card-vegas-brutal.variant-gold {
+  border-color: var(--vegas-gold);
+  box-shadow: 
+    8px 8px 0 var(--vegas-gold),
+    0 0 30px var(--vegas-gold);
+}
+
+/* Hover states */
+.card-vegas-brutal:hover {
+  transform: rotate(0deg) scale(1.03) translateZ(20px);
+  z-index: 10;
+}
+
+.card-vegas-brutal.variant-pink:hover {
+  box-shadow: 
+    12px 12px 0 var(--neon-pink),
+    0 0 50px var(--neon-pink),
+    inset 0 0 50px rgba(255, 0, 127, 0.1);
+  animation: brutalBounce 0.6s ease-out;
+}
+
+.card-vegas-brutal.variant-lime:hover {
+  box-shadow: 
+    12px 12px 0 var(--neon-lime),
+    0 0 50px var(--neon-lime),
+    inset 0 0 50px rgba(0, 255, 65, 0.1);
+}
+
+.card-vegas-brutal.variant-cyan:hover {
+  box-shadow: 
+    12px 12px 0 var(--neon-cyan),
+    0 0 50px var(--neon-cyan),
+    inset 0 0 50px rgba(0, 255, 255, 0.1);
+}
+
+.card-vegas-brutal.variant-gold:hover {
+  box-shadow: 
+    12px 12px 0 var(--vegas-gold),
+    0 0 50px var(--vegas-gold),
+    inset 0 0 50px rgba(255, 215, 0, 0.1);
+}
+
+/* Efeito de escaneamento */
+.card-vegas-brutal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.8s ease-out;
+  z-index: 2;
+}
+
+.card-vegas-brutal:hover::before {
+  left: 100%;
+}
+
+/* ==============================================
+   CHIPS 3D VEGAS
+   ============================================== */
+.chip-vegas {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Anton', sans-serif;
+  font-size: 18px;
+  font-weight: bold;
+  border: 4px solid var(--brutal-black);
+  box-shadow: 
+    0 8px 16px rgba(0, 0, 0, 0.8),
+    inset 0 4px 8px rgba(255, 255, 255, 0.3);
+  transform: perspective(1000px) rotateX(15deg);
+  transition: all 0.3s ease-out;
+  cursor: pointer;
+}
+
+.chip-vegas.chip-red {
+  background: radial-gradient(circle at 30% 30%, #FF6B6B, var(--chip-red), #8B0000);
+  color: var(--brutal-white);
+}
+
+.chip-vegas.chip-green {
+  background: radial-gradient(circle at 30% 30%, #51CF66, var(--chip-green), #003200);
+  color: var(--brutal-white);
+}
+
+.chip-vegas.chip-yellow {
+  background: radial-gradient(circle at 30% 30%, #FFE066, var(--chip-yellow), #CC8800);
+  color: var(--brutal-black);
+}
+
+.chip-vegas.chip-purple {
+  background: radial-gradient(circle at 30% 30%, #CC5DE8, var(--chip-purple), #4C0080);
+  color: var(--brutal-white);
+}
+
+/* Detalhes do chip */
+.chip-vegas::before {
+  content: '';
+  position: absolute;
+  width: 60%;
+  height: 60%;
+  border: 2px dashed rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.chip-vegas::after {
+  content: '$';
+  position: absolute;
+  font-size: 24px;
+  font-weight: bold;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Hover effect */
+.chip-vegas:hover {
+  transform: perspective(1000px) rotateX(-15deg) rotateY(15deg) scale(1.1);
+  animation: chipFlip 0.8s ease-in-out;
+}
+
+/* ==============================================
+   BADGE RARIDADE VEGAS
+   ============================================== */
+.badge-rarity {
+  padding: 8px 16px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: 3px solid;
+  position: relative;
+  transform: rotate(-3deg);
+  cursor: default;
+  display: inline-block;
+}
+
+.badge-rarity.rarity-comum {
+  background: var(--brutal-white);
+  color: var(--brutal-black);
+  border-color: var(--brutal-black);
+  box-shadow: 4px 4px 0 var(--brutal-black);
+}
+
+.badge-rarity.rarity-raro {
+  background: var(--neon-cyan);
+  color: var(--brutal-black);
+  border-color: var(--brutal-black);
+  box-shadow: 
+    4px 4px 0 var(--brutal-black),
+    0 0 20px var(--neon-cyan);
+  animation: neonGlow 2s ease-in-out infinite alternate;
+}
+
+.badge-rarity.rarity-epico {
+  background: var(--neon-purple);
+  color: var(--brutal-white);
+  border-color: var(--brutal-white);
+  box-shadow: 
+    4px 4px 0 var(--brutal-white),
+    0 0 25px var(--neon-purple);
+  animation: neonGlow 1.8s ease-in-out infinite alternate;
+}
+
+.badge-rarity.rarity-lendario {
+  background: var(--vegas-gold);
+  color: var(--brutal-black);
+  border-color: var(--brutal-black);
+  box-shadow: 
+    4px 4px 0 var(--brutal-black),
+    0 0 30px var(--vegas-gold);
+  animation: vegas-spin 3s linear infinite;
+}
+
+.badge-rarity.rarity-mitico {
+  background: linear-gradient(45deg, var(--neon-pink), var(--neon-lime), var(--neon-cyan), var(--neon-purple));
+  background-size: 400% 400%;
+  color: var(--brutal-white);
+  border-color: var(--brutal-white);
+  box-shadow: 
+    4px 4px 0 var(--brutal-white),
+    0 0 35px var(--neon-pink),
+    0 0 45px var(--neon-lime);
+  animation: rainbow-flow 2s ease-in-out infinite, neonFlicker 3s ease-in-out infinite alternate;
+  text-shadow: 
+    0 0 5px var(--brutal-black),
+    0 0 10px var(--brutal-black);
+}
+
+@keyframes rainbow-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ==============================================
+   GRID ASSIMÉTRICO VEGAS
+   ============================================== */
+.grid-vegas-brutal {
+  display: grid;
+  gap: 20px;
+  padding: 20px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 390px) {
+  .grid-vegas-brutal {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  
+  /* Rotações aleatórias */
+  .grid-vegas-brutal > *:nth-child(1) { transform: rotate(1deg); }
+  .grid-vegas-brutal > *:nth-child(2) { transform: rotate(-2deg); }
+  .grid-vegas-brutal > *:nth-child(3) { transform: rotate(1.5deg); }
+  .grid-vegas-brutal > *:nth-child(4) { transform: rotate(-1deg); }
+  .grid-vegas-brutal > *:nth-child(5) { transform: rotate(0.5deg); }
+  .grid-vegas-brutal > *:nth-child(6) { transform: rotate(-1.5deg); }
+}
+
+/* Destaque para o primeiro item */
+.grid-vegas-brutal > *:first-child {
+  grid-column: 1 / -1;
+  transform: rotate(0deg) scale(1.05);
+}
+
+/* ==============================================
+   EFEITOS ESPECIAIS VEGAS
+   ============================================== */
+
+/* Partículas de glitter */
+.vegas-glitter::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(circle at 20% 20%, var(--vegas-gold) 1px, transparent 1px),
+    radial-gradient(circle at 80% 40%, var(--neon-pink) 1px, transparent 1px),
+    radial-gradient(circle at 40% 80%, var(--neon-cyan) 1px, transparent 1px),
+    radial-gradient(circle at 60% 20%, var(--neon-lime) 1px, transparent 1px);
+  background-size: 50px 50px, 60px 60px, 40px 40px, 70px 70px;
+  animation: glitterMove 5s linear infinite;
+  pointer-events: none;
+  opacity: 0.6;
+  z-index: 1;
+}
+
+@keyframes glitterMove {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(50px, -50px); }
+}
+
+/* Efeito roleta no hover */
+.roulette-hover:hover {
+  animation: rouletteSpin 3s ease-out;
+}
+
+/* Efeito dados */
+.dice-roll-effect {
+  animation: diceRoll 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Efeito slot machine */
+.slot-machine {
+  overflow: hidden;
+  position: relative;
+}
+
+.slot-machine .content {
+  transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.slot-machine.spinning .content {
+  animation: slotSpin 2s ease-in-out;
+}
+
+@keyframes slotSpin {
+  0% { transform: translateY(0); }
+  25% { transform: translateY(-100%); }
+  50% { transform: translateY(-200%); }
+  75% { transform: translateY(-100%); }
+  100% { transform: translateY(0); }
+}
+
+/* ==============================================
+   RESPONSIVIDADE MOBILE
+   ============================================== */
+@media (max-width: 430px) {
+  /* Reduzir intensidade dos efeitos em mobile */
+  .card-vegas-brutal {
+    box-shadow: 
+      4px 4px 0 currentColor,
+      0 0 15px currentColor;
+  }
+  
+  .card-vegas-brutal:hover {
+    box-shadow: 
+      6px 6px 0 currentColor,
+      0 0 25px currentColor;
+  }
+  
+  /* Simplificar animações */
+  .text-vegas-title {
+    animation: none;
+    text-shadow: 
+      0 0 10px currentColor,
+      2px 2px 0 var(--brutal-black);
+  }
+  
+  /* Chips menores */
+  .chip-vegas {
+    width: 60px;
+    height: 60px;
+    font-size: 14px;
+  }
+}

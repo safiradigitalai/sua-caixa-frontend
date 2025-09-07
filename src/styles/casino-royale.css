@@ -1,0 +1,489 @@
+/* ==============================================
+   CASINO ROYALE DIGITAL - Premium Theme
+   ============================================== */
+
+/* Import fonts */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700;900&display=swap');
+
+/* ==============================================
+   ROOT VARIABLES
+   ============================================== */
+:root {
+  /* Casino Colors */
+  --gold-champagne: #D4AF37;
+  --gold-rose: #B76E79;
+  --gold-antique: #987549;
+  --gold-bright: #FFD700;
+  --gold-shimmer: #FFF4AA;
+  
+  --silver-platinum: #E5E4E2;
+  --silver-mirror: #C0C0C0;
+  --silver-gunmetal: #818589;
+  
+  --casino-felt: #0B6623;
+  --casino-burgundy: #800020;
+  --casino-midnight: #0A0E27;
+  --casino-noir: #050505;
+  --casino-royale: #1a0033;
+  
+  /* Neon Accents */
+  --neon-pink: #FF10F0;
+  --neon-cyan: #00FFF0;
+  --neon-purple: #9D00FF;
+  --neon-lime: #BFFF00;
+  --neon-orange: #FF6B35;
+  
+  /* Timing */
+  --transition-fast: 150ms;
+  --transition-base: 250ms;
+  --transition-slow: 500ms;
+  --transition-luxury: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* ==============================================
+   BASE STYLES - CASINO LUXE
+   ============================================== */
+body {
+  background: var(--casino-noir);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Luxury background pattern */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 16, 240, 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 40% 20%, rgba(0, 255, 240, 0.02) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ==============================================
+   TYPOGRAPHY - LUXURY HIERARCHY
+   ============================================== */
+.text-display {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.text-luxury {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+}
+
+.text-body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 400;
+}
+
+/* Gold metallic text effect */
+.text-metallic-gold {
+  background: linear-gradient(
+    135deg,
+    #D4AF37 0%,
+    #FFF4AA 25%,
+    #987549 50%,
+    #FFF4AA 75%,
+    #D4AF37 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: goldShimmer 3s linear infinite;
+}
+
+/* Neon text effects */
+.text-neon {
+  filter: brightness(1.2);
+  animation: neonPulse 1.5s ease-in-out infinite;
+}
+
+.text-neon-pink {
+  color: var(--neon-pink);
+  text-shadow: 
+    0 0 5px var(--neon-pink),
+    0 0 10px var(--neon-pink),
+    0 0 20px var(--neon-pink),
+    0 0 40px var(--neon-pink);
+}
+
+.text-neon-cyan {
+  color: var(--neon-cyan);
+  text-shadow: 
+    0 0 5px var(--neon-cyan),
+    0 0 10px var(--neon-cyan),
+    0 0 20px var(--neon-cyan),
+    0 0 40px var(--neon-cyan);
+}
+
+/* ==============================================
+   GLASSMORPHISM COMPONENTS
+   ============================================== */
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 2s linear infinite;
+}
+
+.glass-card-gold {
+  background: linear-gradient(
+    135deg,
+    rgba(212, 175, 55, 0.1),
+    rgba(212, 175, 55, 0.05)
+  );
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 
+    inset 0 0 20px rgba(212, 175, 55, 0.1),
+    0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.glass-card-neon {
+  background: rgba(255, 16, 240, 0.03);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid rgba(255, 16, 240, 0.2);
+  box-shadow: 
+    inset 0 0 20px rgba(255, 16, 240, 0.05),
+    0 0 40px rgba(255, 16, 240, 0.1);
+}
+
+/* ==============================================
+   NEO-BRUTALIST ELEMENTS
+   ============================================== */
+.brutal-card {
+  background: var(--casino-noir);
+  border: 3px solid var(--gold-champagne);
+  box-shadow: 6px 6px 0 var(--gold-champagne);
+  transition: all var(--transition-base) var(--transition-luxury);
+}
+
+.brutal-card:active {
+  transform: translate(3px, 3px);
+  box-shadow: 3px 3px 0 var(--gold-champagne);
+}
+
+.brutal-button {
+  background: linear-gradient(135deg, var(--gold-champagne), var(--gold-antique));
+  border: 3px solid var(--casino-noir);
+  box-shadow: 4px 4px 0 var(--casino-noir);
+  font-family: 'Bebas Neue', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all var(--transition-fast) ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.brutal-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  transition: left var(--transition-slow) ease-out;
+}
+
+.brutal-button:hover::before {
+  left: 100%;
+}
+
+.brutal-button:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--casino-noir);
+}
+
+/* ==============================================
+   CASINO TABLE EFFECT
+   ============================================== */
+.casino-table {
+  background: 
+    radial-gradient(ellipse at center, var(--casino-felt) 0%, #084A17 100%);
+  position: relative;
+  border-radius: 16px;
+  box-shadow: 
+    inset 0 0 40px rgba(0, 0, 0, 0.5),
+    0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.casino-table::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(255, 255, 255, 0.01) 10px,
+      rgba(255, 255, 255, 0.01) 20px
+    );
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* ==============================================
+   LUXURY GRID SYSTEM - MOBILE FIRST
+   ============================================== */
+.luxury-grid {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  grid-template-columns: 1fr;
+}
+
+/* 2 columns on larger phones */
+@media (min-width: 390px) {
+  .luxury-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    padding: 20px;
+  }
+}
+
+/* Asymmetric brutalist grid */
+.brutal-grid {
+  display: grid;
+  gap: 0;
+  grid-template-columns: 1fr;
+}
+
+.brutal-grid > *:nth-child(odd) {
+  transform: rotate(-0.5deg);
+  margin: 8px 4px 8px -4px;
+}
+
+.brutal-grid > *:nth-child(even) {
+  transform: rotate(0.5deg);
+  margin: 8px -4px 8px 4px;
+}
+
+@media (min-width: 390px) {
+  .brutal-grid {
+    grid-template-columns: 3fr 2fr;
+  }
+  
+  .brutal-grid > *:nth-child(3n) {
+    grid-column: span 2;
+  }
+}
+
+/* ==============================================
+   CARD ANIMATIONS
+   ============================================== */
+.card-hover-lift {
+  transition: all var(--transition-base) var(--transition-luxury);
+  transform-style: preserve-3d;
+  transform: perspective(1000px) rotateX(0) rotateY(0);
+}
+
+.card-hover-lift:hover {
+  transform: perspective(1000px) rotateX(-5deg) rotateY(5deg) translateZ(20px);
+  box-shadow: 
+    0 30px 60px rgba(212, 175, 55, 0.3),
+    0 40px 80px rgba(0, 0, 0, 0.4);
+}
+
+/* Coin flip animation for special items */
+.coin-flip {
+  animation: spinCoin 2s var(--transition-luxury);
+  transform-style: preserve-3d;
+}
+
+/* ==============================================
+   RARITY BADGES - LUXURY STYLE
+   ============================================== */
+.badge-comum {
+  background: linear-gradient(135deg, #718096, #4A5568);
+  border: 2px solid #2D3748;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.badge-raro {
+  background: linear-gradient(135deg, #3182CE, #2563EB);
+  border: 2px solid #1E40AF;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+.badge-epico {
+  background: linear-gradient(135deg, #805AD5, #6B46C1);
+  border: 2px solid #553C9A;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 4px 12px rgba(128, 90, 213, 0.5),
+    0 0 20px rgba(128, 90, 213, 0.3);
+}
+
+.badge-lendario {
+  background: linear-gradient(135deg, var(--gold-champagne), var(--gold-antique));
+  border: 2px solid var(--gold-antique);
+  box-shadow: 
+    inset 0 1px 0 var(--gold-shimmer),
+    0 4px 12px rgba(212, 175, 55, 0.5),
+    0 0 30px rgba(212, 175, 55, 0.4);
+  animation: goldShimmer 3s linear infinite;
+}
+
+.badge-mitico {
+  background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+  border: 2px solid var(--neon-purple);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 4px 12px rgba(255, 16, 240, 0.5),
+    0 0 40px rgba(255, 16, 240, 0.5);
+  animation: neonPulse 1.5s ease-in-out infinite;
+}
+
+/* ==============================================
+   MOBILE OPTIMIZATIONS
+   ============================================== */
+@media (max-width: 430px) {
+  /* Reduce blur for performance on mobile */
+  .glass-card,
+  .glass-card-gold,
+  .glass-card-neon {
+    backdrop-filter: blur(8px) saturate(110%);
+    -webkit-backdrop-filter: blur(8px) saturate(110%);
+  }
+  
+  /* Simplify shadows on mobile */
+  .brutal-card {
+    box-shadow: 4px 4px 0 var(--gold-champagne);
+  }
+  
+  /* Disable complex animations on mobile for better performance */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ==============================================
+   SPECIAL EFFECTS
+   ============================================== */
+/* Holographic effect for ultra-rare items */
+.holographic {
+  background: linear-gradient(
+    45deg,
+    #FF10F0 0%,
+    #00FFF0 16.66%,
+    #9D00FF 33.33%,
+    #FFD700 50%,
+    #FF10F0 66.66%,
+    #00FFF0 83.33%,
+    #9D00FF 100%
+  );
+  background-size: 300% 300%;
+  animation: holographic 3s ease-in-out infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+@keyframes holographic {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Glitch effect for cyber elements */
+.glitch {
+  position: relative;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.glitch::before {
+  animation: glitch 2s infinite;
+  color: var(--neon-cyan);
+  z-index: -1;
+}
+
+.glitch::after {
+  animation: glitch 2s infinite reverse;
+  color: var(--neon-pink);
+  z-index: -2;
+}
+
+/* Casino chip stack effect */
+.chip-stack {
+  position: relative;
+  transform-style: preserve-3d;
+  transform: perspective(1000px) rotateX(20deg);
+}
+
+.chip-stack::before,
+.chip-stack::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: inherit;
+  border: inherit;
+}
+
+.chip-stack::before {
+  transform: translateZ(-4px);
+  opacity: 0.8;
+}
+
+.chip-stack::after {
+  transform: translateZ(-8px);
+  opacity: 0.6;
+}

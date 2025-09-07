@@ -1,0 +1,977 @@
+/* Import styles */
+@import url('./styles/box-animation.css');
+
+/* LUXDROP FONTS - Sistema idêntico ao clone */
+@font-face {
+  font-family: 'Heavitas';
+  font-display: swap;
+  src: local('Heavitas'), url('./assets/fonts/Heavitas.CsvLEQ_f.ttf') format('opentype');
+}
+
+@font-face {
+  font-family: 'Luckiest Guy';
+  font-display: swap;
+  src: local('Luckiest Guy'), url('./assets/fonts/LuckiestGuy.ttf') format('opentype');
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==============================================
+   GLOBAL STYLES - GAMING UI
+   ============================================== */
+
+@layer base {
+  /* Reset and base styles */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  html {
+    touch-action: manipulation;
+    scroll-behavior: smooth;
+    /* Prevent horizontal scroll on mobile */
+    overflow-x: hidden;
+    /* Better font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Prevent zoom on input focus (iOS) */
+    -webkit-text-size-adjust: 100%;
+  }
+  
+  body {
+    background: linear-gradient(135deg, #1f2937 0%, #0f172a 50%, #1f2937 100%);
+    color: #FFFFFF;
+    overflow-x: hidden;
+    /* Prevent rubber band scrolling on iOS */
+    overscroll-behavior-y: none;
+    /* Support for safe areas */
+    padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  }
+  
+  /* Input styling for better mobile UX */
+  input, textarea, select {
+    font-size: 16px; /* Prevent zoom on iOS */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+  
+  /* Better button defaults */
+  button {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+  
+  /* Improved focus states for accessibility */
+  :focus-visible {
+    outline: 2px solid #D4AF37;
+    outline-offset: 2px;
+  }
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #171717;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #D4AF37;
+    border-radius: 9999px;
+  }
+}
+
+/* ==============================================
+   LUXDROP LANDING SYSTEM - Sistema Completo do Clone
+   ============================================== */
+
+/* LUXDROP CSS VARIABLES - Cores principais */
+:root {
+  --lavender: #e3e3fa;
+  --lavender-grey: #a9abca; 
+  --dark-night: #16161b;
+  --primary-blue: #22b5ff;
+  --success-green: #65d83e;
+  --background: #21252e;
+  --card-bg: #1a1a20;
+  --border-grey: #2e2f35;
+}
+
+@layer base {
+  /* Landing Container - LuxDrop Style */
+  .landing {
+    max-width: 100vw;
+    padding: 24px 40px 72px 24px;
+  }
+  
+  @media (max-width: 1399px) {
+    .landing {
+      padding: 24px 24px 72px;
+    }
+  }
+  
+  @media screen and (min-width: 768px) and (max-width: 1023px) {
+    .landing {
+      padding: 24px 24px 40px;
+    }
+  }
+  
+  @media screen and (max-width: 767px) {
+    .landing {
+      padding: 16px 16px 32px;
+    }
+  }
+  
+  /* Landing Title - LuxDrop Style */
+  .landing-title {
+    display: flex;
+    align-items: center;
+    color: #e3e3fa;
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 130%;
+    text-transform: uppercase;
+    gap: 8px;
+    transition: color 0.3s linear;
+  }
+  
+  @media screen and (max-width: 767px) {
+    .landing-title {
+      font-size: 20px;
+    }
+  }
+  
+  .landing-title-icon {
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .landing-title-icon svg,
+  .landing-title-icon img {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* ==============================================
+   LUXDROP TOP BANNERS SYSTEM
+   ============================================== */
+
+@layer base {
+  .landing-top-banners {
+    display: flex;
+    margin-top: 10px;
+    width: 100%;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 16px;
+  }
+  
+  @media (max-width: 1399px) {
+    .landing-top-banners {
+      gap: 8px;
+    }
+  }
+  
+  @media (max-width: 1092px) {
+    .landing-top-banners {
+      margin-bottom: 4px;
+    }
+  }
+  
+  .landing-top-banners-wrapper {
+    overflow-x: auto;
+    width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+  }
+  
+  .landing-top-banners-wrapper::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .landing-top-banners-wrapper::-webkit-scrollbar-track {
+    background: rgba(169, 171, 202, 0.05);
+    border-radius: 3px;
+  }
+  
+  .landing-top-banners-wrapper::-webkit-scrollbar-thumb {
+    background: #292a31;
+    border-radius: 3px;
+  }
+  
+  .landing-top-banners-item {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    padding: 24px 32px;
+    width: 100%;
+    aspect-ratio: 343/170;
+    min-width: 343px;
+    min-height: 152px;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+    transition: transform .3s ease;
+  }
+  
+  .landing-top-banners-item:hover {
+    transform: translateY(-8px);
+  }
+  
+  /* LuxDrop Promotions System */
+  .landing-promotions {
+    display: flex;
+    position: relative;
+    align-items: end;
+    width: 100%;
+    height: 246px;
+    overflow: hidden;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform .3s ease;
+  }
+  
+  .landing-promotions:hover {
+    transform: translateY(-8px);
+  }
+  
+  @media screen and (max-width: 1919px) {
+    .landing-promotions {
+      height: 172px;
+    }
+  }
+  
+  /* LuxDrop Promotion Gradients */
+  .landing-promotions.boxesBanner {
+    background: linear-gradient(284deg, #4fb7fb 0.8%, #1c67d7 102.01%), #21252e;
+  }
+  
+  .landing-promotions.battlesBanner {
+    background: linear-gradient(257deg, #fbcd4f -14.67%, #c57f1e 99.26%), #21252e;
+  }
+  
+  .landing-promotions.rewardsBanner {
+    background: linear-gradient(284deg, #a54ffb 0.8%, #4c00b6 102.01%), #21252e;
+  }
+  
+  .landing-top-banners-item:hover {
+    transform: translateY(-8px);
+  }
+  
+  @media (max-width: 1599px) {
+    .landing-top-banners-item {
+      padding: 24px;
+    }
+  }
+  
+  .landing-top-banners-item-btn {
+    z-index: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    padding: 0 24px;
+    border-radius: 4px;
+    background: #e3e3fa;
+    color: #21252e;
+    text-align: center;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 150%;
+    gap: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+  
+  @media (max-width: 1599px) {
+    .landing-top-banners-item-btn {
+      font-size: 14px;
+      padding: 20px;
+      height: 40px;
+    }
+  }
+  
+  @media (max-width: 1399px) {
+    .landing-top-banners-item-btn {
+      font-size: 12px;
+      padding: 16px;
+      height: 32px;
+    }
+  }
+  
+  .landing-top-banners-item-btn:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* ==============================================
+   LUXDROP PROMOTIONS CONTENT
+   ============================================== */
+
+@layer base {
+  .landing-promotions-content {
+    z-index: 1;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  @media screen and (max-width: 1919px) {
+    .landing-promotions-content {
+      padding: 20px;
+    }
+  }
+  
+  @media screen and (max-width: 1023px) {
+    .landing-promotions-content {
+      justify-content: center;
+    }
+  }
+  
+  .landing-promotions-icon {
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .landing-promotions-icon svg,
+  .landing-promotions-icon img {
+    width: 40px;
+    height: 40px;
+  }
+  
+  @media screen and (max-width: 1919px) {
+    .landing-promotions-icon svg,
+    .landing-promotions-icon img {
+      width: 32px;
+      height: 32px;
+    }
+  }
+  
+  @media screen and (min-width: 768px) and (max-width: 1023px) {
+    .landing-promotions-icon svg,
+    .landing-promotions-icon img {
+      width: 56px;
+      height: 56px;
+    }
+  }
+  
+  .landing-promotions-title {
+    color: #e3e3fa;
+    font-family: 'Inter', sans-serif;
+    font-size: 40px;
+    font-weight: 700;
+    font-style: normal;
+    line-height: 130%;
+    text-transform: capitalize;
+    gap: 20px;
+  }
+  
+  @media screen and (max-width: 1919px) {
+    .landing-promotions-title {
+      font-size: 28px;
+    }
+  }
+  
+  @media screen and (min-width: 768px) and (max-width: 1023px) {
+    .landing-promotions-title {
+      font-size: 40px;
+    }
+  }
+  
+  .landing-promotions-text {
+    color: #e3e3fa;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 150%;
+  }
+  
+  @media screen and (max-width: 1919px) {
+    .landing-promotions-text {
+      font-size: 14px;
+    }
+  }
+  
+  @media screen and (min-width: 768px) and (max-width: 1023px) {
+    .landing-promotions-text {
+      font-size: 20px;
+    }
+  }
+  
+  .landing-promotions-arrow {
+    width: 16px;
+    height: 16px;
+    transform: rotate(180deg);
+  }
+  
+  @media screen and (min-width: 768px) and (max-width: 1023px) {
+    .landing-promotions-arrow {
+      width: 32px;
+      height: 32px;
+    }
+  }
+  
+  .landing-promotions-arrow-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #e3e3fa;
+  }
+  
+  @media screen and (min-width: 768px) and (max-width: 1023px) {
+    .landing-promotions-arrow-wrapper {
+      min-width: 64px;
+      min-height: 64px;
+    }
+  }
+}
+
+/* ==============================================
+   LUXDROP FEATURED CASES GRID
+   ============================================== */
+
+@layer base {
+  .landing-featured-cases {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 24px;
+  }
+  
+  @media screen and (max-width: 1023px) {
+    .landing-featured-cases {
+      margin-top: 32px;
+    }
+  }
+  
+  @media screen and (max-width: 767px) {
+    .landing-featured-cases {
+      margin-top: 24px;
+    }
+  }
+  
+  .landing-featured-cases-view-all-btn {
+    color: #e3e3fa;
+    font-size: 16px;
+    transition: all 0.3s linear;
+  }
+  
+  @media screen and (max-width: 767px) {
+    .landing-featured-cases-view-all-btn {
+      width: 100%;
+    }
+  }
+  
+  .landing-featured-cases-list {
+    width: 100%;
+    display: grid;
+    margin-top: 24px;
+    gap: 16px;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (min-width: 768px) {
+    .landing-featured-cases-list {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  @media (min-width: 1150px) {
+    .landing-featured-cases-list {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  
+  @media (min-width: 1600px) {
+    .landing-featured-cases-list {
+      grid-template-columns: repeat(5, 1fr);
+    }
+  }
+  
+  @media screen and (max-width: 767px) {
+    .landing-featured-cases-list {
+      margin-top: 16px;
+    }
+  }
+}
+
+/* ==============================================
+   RESPONSIVE GRID SYSTEM - Enhanced
+   ============================================== */
+
+@layer base {
+  /* Responsive Grid Utilities - Complementary to LuxDrop */
+  .grid-responsive-cards {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(2, 1fr); /* Mobile base: 2 colunas */
+  }
+  
+  @media (min-width: 640px) {
+    .grid-responsive-cards {
+      gap: 20px;
+      grid-template-columns: repeat(2, 1fr); /* Small: ainda 2 colunas */
+    }
+  }
+  
+  @media (min-width: 768px) {
+    .grid-responsive-cards {
+      gap: 24px;
+      grid-template-columns: repeat(3, 1fr); /* Tablet: 3 colunas */
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .grid-responsive-cards {
+      gap: 28px;
+      grid-template-columns: repeat(4, 1fr); /* Desktop: 4 colunas */
+    }
+  }
+  
+  @media (min-width: 1280px) {
+    .grid-responsive-cards {
+      gap: 32px;
+      grid-template-columns: repeat(5, 1fr); /* XL: 5 colunas */
+    }
+  }
+  
+  /* Card aspect ratios consistentes - LuxDrop Standard */
+  .card-aspect-gaming {
+    aspect-ratio: 343/170; /* Proporção exata do LuxDrop */
+  }
+  
+  .card-aspect-square {
+    aspect-ratio: 1; /* Para cards quadrados */
+  }
+  
+  .card-aspect-luxdrop {
+    aspect-ratio: 343/170; /* Alias para clareza */
+  }
+  
+  /* Scroll horizontal para ofertas especiais */
+  .scroll-horizontal {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: 0 16px 16px 16px;
+    
+    /* Hide scrollbar but keep functionality */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scroll-horizontal::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .scroll-horizontal > * {
+    flex-shrink: 0;
+    min-width: 280px; /* Largura mínima para mobile */
+  }
+  
+  @media (min-width: 640px) {
+    .scroll-horizontal {
+      gap: 20px;
+      padding: 0 24px 20px 24px;
+    }
+    
+    .scroll-horizontal > * {
+      min-width: 320px;
+    }
+  }
+  
+  @media (min-width: 768px) {
+    .scroll-horizontal {
+      gap: 24px;
+      padding: 0 32px 24px 32px;
+    }
+    
+    .scroll-horizontal > * {
+      min-width: 343px; /* Largura ideal do LuxDrop */
+    }
+  }
+}
+
+/* ==============================================
+   COMPONENT PATTERNS - Enhanced
+   ============================================== */
+
+@layer components {
+  /* Card hover animations - LuxDrop style */
+  .card-hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .card-hover-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  }
+  
+  .card-hover-lift:active {
+    transform: translateY(-4px);
+  }
+  
+  /* Touch-friendly buttons */
+  .btn-touch {
+    min-height: 48px; /* Minimum touch target */
+    min-width: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+  }
+  
+  @media (max-width: 767px) {
+    .btn-mobile-full {
+      width: 100%;
+    }
+  }
+
+  /* Button variants - Enhanced */
+  .btn-primary {
+    background: linear-gradient(135deg, #FFD700, #FF8C00);
+    color: #000000;
+    font-weight: bold;
+    padding: 16px 24px;
+    border: 4px solid #000000;
+    box-shadow: 6px 6px 0 #000000;
+    transition: all 150ms ease-out;
+    cursor: pointer;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 8px 8px 0 #000000;
+  }
+  
+  .btn-primary:active {
+    transform: translateY(1px);
+    box-shadow: 4px 4px 0 #000000;
+    font-family: 'Anton', 'Impact', sans-serif;
+  }
+  
+  .btn-primary:active {
+    transform: translate(3px, 3px);
+    box-shadow: 3px 3px 0 #000000;
+  }
+  
+  .btn-secondary {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    color: #FFD700;
+    font-weight: 500;
+    padding: 16px 24px;
+    border-radius: 16px;
+    transition: all 150ms ease-out;
+    cursor: pointer;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .btn-secondary:hover {
+    border-color: #FFD700;
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.4);
+  }
+  
+  .btn-secondary:active {
+    transform: scale(0.95);
+  }
+  
+  .btn-ghost {
+    color: #FFD700;
+    font-weight: 500;
+    padding: 12px 16px;
+    border-radius: 8px;
+    transition: all 150ms ease-out;
+    cursor: pointer;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .btn-ghost:hover {
+    background: rgba(255, 215, 0, 0.1);
+    text-shadow: 0 0 10px currentColor;
+  }
+  
+  .btn-ghost:active {
+    transform: scale(0.95);
+  }
+  
+  /* Card patterns */
+  .card {
+    background: #2D2D2D;
+    border: 1px solid #4B5563;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .card-interactive {
+    background: #2D2D2D;
+    border: 1px solid #4B5563;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 150ms ease-out;
+  }
+  
+  .card-interactive:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+  
+  .card-interactive:hover {
+    border-color: rgba(212, 175, 55, 0.5);
+  }
+  
+  /* Input patterns */
+  .input-primary {
+    background: #2D2D2D;
+    border: 1px solid #6B7280;
+    color: white;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 16px;
+    transition: border-color 150ms ease-out;
+  }
+  
+  .input-primary::placeholder {
+    color: #9CA3AF;
+  }
+  
+  .input-primary:focus {
+    border-color: #D4AF37;
+    outline: 1px solid #D4AF37;
+  }
+  
+  /* Loading states */
+  .skeleton {
+    background: linear-gradient(90deg, #374151, #6B7280, #374151);
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  
+  /* Status badges */
+  .badge-success {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22C55E;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  .badge-warning {
+    background: rgba(212, 175, 55, 0.2);
+    color: #D4AF37;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  .badge-error {
+    background: rgba(239, 68, 68, 0.2);
+    color: #EF4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  /* Bottom navigation safe area */
+  .pb-safe {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ==============================================
+   UTILITIES
+   ============================================== */
+
+@layer utilities {
+  /* Gaming gradients */
+  .text-gradient-gold {
+    background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-gaming {
+    background: linear-gradient(135deg, #60A5FA 0%, #A78BFA 50%, #F472B6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* Gaming container with proper margins */
+  .container-gaming {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  @media (min-width: 640px) {
+    .container-gaming {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .container-gaming {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  /* Gaming grid system - Cards 2x maiores */
+  .grid-gaming {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  @media (min-width: 640px) {
+    .grid-gaming {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .grid-gaming {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      max-width: 100%;
+    }
+  }
+
+  @media (min-width: 1600px) {
+    .grid-gaming {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2.5rem;
+    }
+  }
+  
+  .min-h-touch-min {
+    min-height: 44px;
+  }
+  
+  .active\:scale-95:active {
+    transform: scale(0.95);
+  }
+  
+  .active\:scale-98:active {
+    transform: scale(0.98);
+  }
+
+  /* Gaming blur effects */
+  .backdrop-blur-gaming {
+    backdrop-filter: blur(12px) saturate(180%);
+  }
+
+  /* Gaming shadows */
+  .shadow-gaming {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .shadow-gaming-hover {
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Gaming components padronizados */
+  .card-gaming-base {
+    @apply bg-black/20 backdrop-blur-gaming border border-white/10 rounded-2xl shadow-gaming;
+    transition: all 0.3s ease;
+  }
+
+  .card-gaming-base:hover {
+    @apply shadow-gaming-hover border-white/20;
+  }
+
+  .button-gaming-primary {
+    @apply bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-gaming hover:shadow-gaming-hover transition-all duration-200;
+  }
+
+  .button-gaming-secondary {
+    @apply bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-medium py-3 px-6 rounded-xl shadow-gaming transition-all duration-200;
+  }
+
+  .input-gaming {
+    @apply bg-black/30 backdrop-blur-gaming border border-white/20 focus:border-blue-400/50 rounded-xl py-3 px-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20 transition-all duration-200;
+  }
+
+  .text-gaming-title {
+    @apply text-2xl font-bold text-gradient-gaming;
+  }
+
+  .text-gaming-subtitle {
+    @apply text-lg font-semibold text-white;
+  }
+
+  .badge-gaming {
+    @apply bg-black/30 backdrop-blur-gaming border border-white/20 text-white text-sm font-medium px-3 py-1 rounded-lg;
+  }
+
+  /* Modal gaming padrão */
+  .modal-gaming-backdrop {
+    @apply fixed inset-0 bg-black/70 backdrop-blur-gaming z-50;
+  }
+
+  .modal-gaming-content {
+    @apply bg-black/90 backdrop-blur-gaming border border-white/10 rounded-2xl shadow-gaming;
+  }
+}
