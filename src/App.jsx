@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 
 // Hooks
-import useAppStore, { usePWA, useNotifications } from './stores/useAppStore'
+import useAppStore, { usePWA, useNotifications, useUser } from './stores/useAppStore'
 
 // Layouts
 import MobileLayout from './components/layout/MobileLayout'
@@ -31,6 +31,73 @@ function App() {
   const location = useLocation()
   const { setOnline, setInstallPrompt } = usePWA()
   const { showInfo, showSuccess } = useNotifications()
+  const { initializeUser, isAuthenticated, user } = useUser()
+  const [authChecked, setAuthChecked] = useState(false)
+
+  // ==============================================
+  // REAL AUTHENTICATION SYSTEM
+  // ==============================================
+  
+  useEffect(() => {
+    // Verificar sessão existente do Supabase
+    const initializeAuth = async () => {
+      const { default: useAppStore } = await import('./stores/useAppStore')
+      const { supabase } = await import('./lib/supabase')
+      
+      try {
+        console.log('🔍 Verificando sessão existente...')
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('❌ Erro ao verificar sessão:', error)
+          return
+        }
+
+        if (session?.user) {
+          console.log('✅ Usuário autenticado encontrado:', session.user.id)
+          // Inicializar dados do usuário autenticado
+          await useAppStore.getState().initializeUser(session.user.id)
+        } else {
+          console.log('ℹ️ Nenhuma sessão ativa - usuário não autenticado')
+        }
+        
+        setAuthChecked(true)
+      } catch (error) {
+        console.error('❌ Erro na inicialização de autenticação:', error)
+      }
+    }
+
+    initializeAuth()
+    
+    // Escutar mudanças na autenticação
+    const setupAuthListener = async () => {
+      const { default: useAppStore } = await import('./stores/useAppStore')
+      const { supabase } = await import('./lib/supabase')
+      
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log('🔄 Mudança de autenticação:', event, session?.user?.id || 'sem usuário')
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          // Usuário logou - inicializar dados
+          await useAppStore.getState().initializeUser(session.user.id)
+        } else if (event === 'SIGNED_OUT') {
+          // Usuário deslogou - limpar estado
+          useAppStore.getState().logout()
+        }
+      })
+      
+      return subscription
+    }
+    
+    let authSubscription = null
+    setupAuthListener().then(sub => {
+      authSubscription = sub
+    })
+
+    return () => {
+      authSubscription?.unsubscribe()
+    }
+  }, [])
 
   // ==============================================
   // PWA SETUP
@@ -104,6 +171,27 @@ function App() {
     }
   }, [location.pathname])
 
+  // Mostrar loading durante verificação de autenticação
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-brutal-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-neon-purple border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-white text-lg font-semibold">Carregando...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Páginas que requerem autenticação
+  const protectedRoutes = ['/perfil']
+  const requiresAuth = protectedRoutes.includes(location.pathname)
+  
+  // Se não estiver autenticado e tentar acessar página protegida, redirecionar
+  if (!isAuthenticated && requiresAuth) {
+    return <LoginPage />
+  }
+
   return (
     <div className="App min-h-screen bg-brutal-black">
       {/* Main Layout */}
@@ -111,29 +199,19 @@ function App() {
         {/* Animated Routes */}
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
-            {/* Home - Vegas/Gaming Style Original */}
+            {/* Rotas públicas - acessíveis sem login */}
             <Route path="/" element={<HomePage />} />
-            
-            {/* Experimental styles (not in use) */}
             <Route path="/clean" element={<HomePageClean />} />
             <Route path="/gaming" element={<HomePageGaming />} />
-            
-            {/* Caixas - GAMING é nossa estética oficial */}
             <Route path="/caixas" element={<CaixasPageGaming />} />
-            
-            {/* Transparência */}
             <Route path="/transparencia" element={<TransparenciaPage />} />
-            
-            {/* Ganhadores */}
             <Route path="/ganhadores" element={<GanhadoresPage />} />
-            
-            {/* Login */}
             <Route path="/login" element={<LoginPage />} />
             
-            {/* Usuário */}
-            <Route path="/perfil" element={<PerfilPage />} />
+            {/* Rotas protegidas - só acessíveis se autenticado */}
+            <Route path="/perfil" element={isAuthenticated ? <PerfilPage /> : <LoginPage />} />
             
-            {/* 404 - Redirect to home for demo */}
+            {/* Fallback */}
             <Route path="*" element={<HomePage />} />
           </Routes>
         </AnimatePresence>

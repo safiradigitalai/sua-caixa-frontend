@@ -106,8 +106,11 @@ const CaixaOpeningModal = ({
       })
       
       // Chamar API
-      console.log('📡 Abrindo caixa:', compraId)
-      const resultado = await abrirCaixa({ pagamentoId: compraId })
+      console.log('📡 Abrindo caixa:', compraId, 'para usuário:', user?.id)
+      const resultado = await abrirCaixa({ 
+        pagamentoId: compraId,
+        usuarioId: user?.id 
+      })
       console.log('📦 Item recebido:', resultado)
       
       if (!resultado || !resultado.item) {
@@ -135,7 +138,13 @@ const CaixaOpeningModal = ({
       }, 500)
       
       if (resultado.novoSaldo !== undefined) {
+        console.log('💳 Atualizando saldo do usuário no store:', {
+          saldoAnterior: user?.saldo,
+          novoSaldo: resultado.novoSaldo
+        })
         updateUser({ saldo: resultado.novoSaldo })
+      } else {
+        console.warn('⚠️  Novo saldo não retornado na abertura da caixa')
       }
       
     } catch (error) {

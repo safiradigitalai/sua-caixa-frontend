@@ -268,6 +268,45 @@ export class CarteiraAPI {
   }
 
   // ==============================================
+  // COMPRAS COM SALDO
+  // ==============================================
+  
+  static async processarCompraComSaldo(usuarioId: string, valor: number, descricao: string = 'Compra na loja') {
+    try {
+      console.log('🔍 Iniciando processamento de compra com saldo:', {
+        usuarioId,
+        valor,
+        descricao
+      })
+      
+      // Verificar se o usuário tem saldo suficiente
+      const saldoInfo = await this.buscarSaldo(usuarioId)
+      console.log('💰 Saldo atual do usuário:', saldoInfo)
+      
+      if (saldoInfo.saldoAtual < valor) {
+        throw new Error('Saldo insuficiente')
+      }
+
+      // Decrementar saldo
+      console.log('⬇️ Decrementando saldo...')
+      const resultado = await this.atualizarSaldo(usuarioId, -valor, `compra: ${descricao}`)
+      console.log('✅ Saldo decrementado com sucesso:', resultado)
+      
+      return {
+        success: true,
+        saldoAnterior: resultado.saldoAnterior,
+        novoSaldo: resultado.saldoNovo,
+        valorDebitado: valor,
+        descricao: descricao
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Erro ao processar compra com saldo:', error)
+      throw new Error(error.message || 'Erro ao processar compra')
+    }
+  }
+
+  // ==============================================
   // FUNÇÕES AUXILIARES
   // ==============================================
   

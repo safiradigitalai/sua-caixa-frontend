@@ -20,6 +20,7 @@ import RaridadeBadge from '../ui/RaridadeBadge'
 // Hooks
 import { useNotifications, useUser } from '../../stores/useAppStore'
 import { useApi } from '../../hooks/useApi'
+import { CarteiraAPI } from '../../lib/carteiraAPI'
 
 // Utils
 import { formatCurrency, formatTime, triggerHaptic, cn } from '../../lib/utils'
@@ -34,12 +35,16 @@ const PaymentModal = ({
   const [copiedPix, setCopiedPix] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState(15 * 60) // 15 minutos
   const [paymentData, setPaymentData] = useState(null)
+  const [loadingSaldo, setLoadingSaldo] = useState(false)
   
   const timerRef = useRef(null)
   const pollRef = useRef(null)
   
   const { addNotification } = useNotifications()
   const { user, updateUser } = useUser()
+  
+  // Usar saldo do store como fonte de verdade
+  const saldoAtual = user?.saldo || 0
 
   // Hooks de pagamento - usar apenas mutate, não usar no useEffect
   const { mutate: criarPagamento, loading: creatingPayment } = useApi('/pagamentos/criar', {
@@ -65,11 +70,20 @@ const PaymentModal = ({
       setPaymentData(null)
       setCopiedPix(false)
       setTimeRemaining(15 * 60)
+      // Sincronizar saldo com API apenas se necessário
+      sincronizarSaldoSeNecessario()
     } else {
       if (timerRef.current) clearInterval(timerRef.current)
       if (pollRef.current) clearInterval(pollRef.current)
     }
   }, [isOpen])
+
+  // Sincronizar saldo apenas se não estiver inicializado
+  const sincronizarSaldoSeNecessario = async () => {
+    // O store agora é inicializado dinamicamente no App.jsx
+    // Não precisamos mais de sincronização aqui
+    console.log('💰 Saldo atual do store:', saldoAtual)
+  }
 
   const startTimer = (expiraEm) => {
     const expirationTime = new Date(expiraEm).getTime()
@@ -112,7 +126,8 @@ const PaymentModal = ({
         const result = await criarPagamento({
           caixaId: caixa.id,
           metodo: 'pix',
-          valor: caixa.preco
+          valor: caixa.preco,
+          usuarioId: user?.id
         })
         
         setPaymentData(result)
@@ -126,6 +141,28 @@ const PaymentModal = ({
           type: 'error',
           title: 'Erro no Pagamento',
           message: error.message || 'Erro ao criar pagamento'
+        })
+      }
+    } else if (method === 'saldo') {
+      triggerHaptic('light')
+      
+      try {
+        const result = await criarPagamento({
+          caixaId: caixa.id,
+          metodo: 'saldo',
+          valor: caixa.preco,
+          usuarioId: user?.id
+        })
+        
+        // Para pagamento com saldo, vai direto para sucesso
+        handlePaymentSuccess(result)
+        
+      } catch (error) {
+        console.error('Erro ao usar saldo:', error)
+        addNotification({
+          type: 'error',
+          title: 'Erro ao Usar Saldo',
+          message: error.message || 'Erro ao processar pagamento com saldo'
         })
       }
     }
@@ -307,6 +344,38 @@ const PaymentModal = ({
                   </h3>
                   
                   <div className="space-y-3">
+                    {/* Saldo - só mostrar se usuário tem saldo suficiente */}
+                    {user && !loadingSaldo && saldoAtual >= caixa.preco && (
+                      <button
+                        onClick={() => handleSelectPaymentMethod('saldo')}
+                        disabled={creatingPayment}
+                        className="w-full bg-gradient-to-r from-green-600/20 to-blue-600/20 backdrop-blur-gaming hover:from-green-600/30 hover:to-blue-600/30 border border-green-400/30 hover:border-green-400/50 rounded-2xl p-4 transition-all duration-200"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-xl flex items-center justify-center">
+                            <Wallet className="w-6 h-6 text-white" />
+                          </div>
+                          
+                          <div className="flex-1 text-left">
+                            <h4 className="text-base font-semibold text-white mb-1">
+                              Usar Saldo
+                            </h4>
+                            <p className="text-sm text-gray-300">
+                              Saldo disponível: {formatCurrency(saldoAtual)} • Instantâneo
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            {creatingPayment ? (
+                              <LoadingSpinner size="sm" />
+                            ) : (
+                              <ArrowRight className="w-5 h-5 text-green-400" />
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    )}
+                    
                     {/* PIX */}
                     <button
                       onClick={() => handleSelectPaymentMethod('pix')}

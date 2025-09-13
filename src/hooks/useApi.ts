@@ -109,6 +109,7 @@ export interface MappedGanhador {
 export interface PagamentoCreateData {
   valor: number
   caixaId: string
+  metodo: 'pix' | 'saldo'
   usuarioId?: string
 }
 
@@ -118,6 +119,7 @@ export interface PagamentoStatusData {
 
 export interface AbrirCaixaData {
   pagamentoId: string
+  usuarioId?: string
 }
 
 // Tipos para resultados de mutação
@@ -277,41 +279,125 @@ export const useApi = <T = any>(
 
       // Implementar operações de escrita aqui
       if (endpoint === '/pagamentos/criar') {
-        // Criar pagamento PIX real no Supabase
-        const { valor, caixaId, usuarioId = '550e8400-e29b-41d4-a716-446655440000' } = mutationData as PagamentoCreateData
-        result = await supabaseHelpers.criarPagamentoPIX(usuarioId, valor, caixaId)
+        const { valor, caixaId, metodo, usuarioId } = mutationData as PagamentoCreateData
+        
+        // Buscar usuário autenticado se não foi fornecido
+        const userId = usuarioId || (() => {
+          const { default: useAppStore } = require('../stores/useAppStore')
+          const user = useAppStore.getState().user
+          if (!user?.id) {
+            throw new Error('Usuário não autenticado')
+          }
+          return user.id
+        })()
+        
+        if (metodo === 'saldo') {
+          // Pagamento com saldo - processar diretamente
+          const { CarteiraAPI } = await import('../lib/carteiraAPI')
+          
+          try {
+            // Verificar se o usuário tem saldo suficiente
+            const saldoInfo = await CarteiraAPI.buscarSaldo(userId)
+            
+            if (saldoInfo.saldoAtual < valor) {
+              throw new Error('Saldo insuficiente')
+            }
+            
+            // Criar pagamento com saldo confirmado diretamente
+            const pagamentoId = `saldo-${Date.now()}-${Math.random().toString(36).substring(7)}`
+            result = {
+              id: pagamentoId,
+              compraId: pagamentoId, // Adicionar compraId para compatibilidade
+              gatewayId: null,
+              qrCode: null,
+              qrCodeBase64: null,
+              copiaCola: null,
+              valor: valor,
+              expiracaoEm: null,
+              status: 'confirmado', // Pagamento com saldo é instantâneo
+              metodo: 'saldo',
+              caixaId: caixaId,
+              usuarioId: userId
+            }
+          } catch (error) {
+            throw new Error(`Erro ao processar pagamento com saldo: ${error instanceof Error ? error.message : error}`)
+          }
+          
+        } else {
+          // Criar pagamento PIX real no Supabase
+          result = await supabaseHelpers.criarPagamentoPIX(userId, valor, caixaId)
+        }
         
       } else if (endpoint === '/pagamentos/status') {
         // Verificar status real do pagamento
         const { gatewayId } = mutationData as PagamentoStatusData
-        const statusData = await supabaseHelpers.verificarStatusPagamento(gatewayId)
-        result = {
-          status: statusData.status === 'confirmado' ? 'aprovado' : statusData.status,
-          pagamentoId: statusData.pagamentoId,
-          novoSaldo: statusData.status === 'confirmado' ? 150.75 : undefined // Mock do saldo
-        } as PagamentoStatusResult
+        
+        // Se o gatewayId é null, significa que foi pagamento com saldo
+        if (!gatewayId || gatewayId.startsWith('saldo-')) {
+          // Pagamento com saldo já está confirmado
+          result = {
+            status: 'aprovado',
+            pagamentoId: gatewayId || 'saldo-payment',
+            novoSaldo: undefined // Saldo será atualizado na abertura da caixa
+          } as PagamentoStatusResult
+        } else {
+          const statusData = await supabaseHelpers.verificarStatusPagamento(gatewayId)
+          result = {
+            status: statusData.status === 'confirmado' ? 'aprovado' : statusData.status,
+            pagamentoId: statusData.pagamentoId,
+            novoSaldo: undefined // Saldo será atualizado na abertura da caixa
+          } as PagamentoStatusResult
+        }
         
       } else if (endpoint.startsWith('/caixas/abrir/')) {
         // Abrir caixa real com algoritmo de probabilidade
         const caixaId = endpoint.split('/').pop()
-        const { pagamentoId } = mutationData as AbrirCaixaData
+        const { pagamentoId, usuarioId } = mutationData as AbrirCaixaData
         
         if (!caixaId) throw new Error('ID da caixa não fornecido')
         
-        // Detectar se é demo ou buscar dados reais
-        if (caixaId === 'demo-caixa-001' || pagamentoId?.startsWith('demo-compra-')) {
-          // Para demo, buscar itens reais do banco e escolher um aleatoriamente
+        // Detectar se é demo, pagamento com saldo, ou buscar dados reais
+        if (caixaId === 'demo-caixa-001' || pagamentoId?.startsWith('demo-compra-') || pagamentoId?.startsWith('saldo-')) {
+          // Processar compra com saldo se necessário - DECLARAR FORA DO TRY/CATCH
+          let novoSaldo: number | undefined = undefined
+          
+          // Para demo e pagamento com saldo, buscar itens reais do banco e escolher um aleatoriamente
           try {
-            // Buscar uma caixa real disponível e sua transparência
+            // Buscar a caixa específica ou usar a primeira disponível
             const caixas = await supabaseHelpers.getAllCaixas()
-            const primeiraCaixa = caixas?.[0]
+            const caixaEspecifica = caixas.find((c: any) => c.id === caixaId) || caixas?.[0]
             
-            if (!primeiraCaixa) {
+            if (!caixaEspecifica) {
               throw new Error('Nenhuma caixa disponível')
             }
             
-            const transparencia = await supabaseHelpers.getTransparenciaCaixa(primeiraCaixa.id)
-            
+            const transparencia = await supabaseHelpers.getTransparenciaCaixa(caixaEspecifica.id)
+            if (pagamentoId?.startsWith('saldo-')) {
+              console.log('🔄 Processando compra com saldo:', {
+                caixaId: caixaEspecifica.id,
+                preco: caixaEspecifica.preco,
+                nome: caixaEspecifica.nome
+              })
+              
+              const { CarteiraAPI } = await import('../lib/carteiraAPI')
+              if (!usuarioId) {
+                throw new Error('ID do usuário não fornecido para pagamento com saldo')
+              }
+              
+              const resultado = await CarteiraAPI.processarCompraComSaldo(
+                usuarioId, 
+                caixaEspecifica.preco, 
+                `Caixa: ${caixaEspecifica.nome}`
+              )
+              
+              console.log('💰 Resultado do processamento de saldo:', resultado)
+              novoSaldo = resultado.novoSaldo
+              
+              // 🔥 SINCRONIZAR SALDO COM O STORE ZUSTAND
+              const { default: useAppStore } = await import('../stores/useAppStore')
+              useAppStore.getState().updateUserBalance(novoSaldo)
+            }
+
             if (transparencia?.itens?.length > 0) {
               const randomItem = transparencia.itens[Math.floor(Math.random() * transparencia.itens.length)]
               
@@ -327,7 +413,7 @@ export const useApi = <T = any>(
                   imagemUrl: randomItem.imagem_url || randomItem.imagemUrl
                 },
                 compraId: pagamentoId,
-                novoSaldo: 475.25, // Saldo demo atualizado
+                novoSaldo: novoSaldo,
                 timestamp: new Date().toISOString()
               } as AbrirCaixaResult
             } else {
@@ -350,16 +436,18 @@ export const useApi = <T = any>(
             result = {
               item: fallbackItem,
               compraId: pagamentoId,
-              novoSaldo: 475.25,
+              novoSaldo: novoSaldo,
               timestamp: new Date().toISOString()
             } as AbrirCaixaResult
           }
         } else {
+          // Para pagamentos PIX reais, usar o Supabase
           const supabaseResult = await supabaseHelpers.abrirCaixa(caixaId, pagamentoId)
+          
           result = {
             item: supabaseResult.item,
             compraId: supabaseResult.compraId,
-            novoSaldo: 475.25, // Mock - seria calculado baseado no usuário
+            novoSaldo: supabaseResult.novoSaldo,
             timestamp: new Date().toISOString()
           } as AbrirCaixaResult
         }

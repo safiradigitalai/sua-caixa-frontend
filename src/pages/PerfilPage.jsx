@@ -93,6 +93,17 @@ const PerfilPage = () => {
     }
   }, [user?.id, activeTab])
 
+  // Escutar mudanças de saldo no store Zustand
+  useEffect(() => {
+    if (user?.saldo !== undefined && user.saldo !== saldoAtual) {
+      console.log('💳 Saldo atualizado no store, sincronizando perfil:', {
+        saldoStore: user.saldo,
+        saldoAtual: saldoAtual
+      })
+      setSaldoAtual(user.saldo)
+    }
+  }, [user?.saldo, saldoAtual])
+
   const carregarDadosPerfil = async () => {
     if (!user?.id) return
 
@@ -152,12 +163,30 @@ const PerfilPage = () => {
     }
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     triggerHaptic('medium')
-    logout()
     
-    // Redirecionar imediatamente após logout
-    navigate('/login')
+    try {
+      // Fazer logout no Supabase
+      const { supabase } = await import('../lib/supabase')
+      const { error } = await supabase.auth.signOut()
+      
+      if (error) {
+        console.error('❌ Erro ao fazer logout no Supabase:', error)
+      }
+      
+      // Limpar estado local
+      logout()
+      
+      // Redirecionar para login
+      navigate('/login', { replace: true })
+      
+    } catch (error) {
+      console.error('❌ Erro durante logout:', error)
+      // Mesmo se houver erro, limpar estado local
+      logout()
+      navigate('/login', { replace: true })
+    }
   }
 
   // Funções da Carteira

@@ -47,6 +47,7 @@ interface AppState extends PWAState, UIState, CacheState {
   logout: () => void
   updateUser: (userData: Partial<AppUser>) => void
   updateUserBalance: (novoSaldo: number) => void
+  initializeUser: (userId: string) => Promise<void>
 
   // ==============================================
   // ACTIONS - CACHE
@@ -81,21 +82,9 @@ const initialState: Pick<AppState, keyof PWAState | keyof UIState | keyof CacheS
   loading: false,
   notifications: [],
 
-  // User data (usuário demo para demonstração)
-  user: {
-    id: 'demo-user-1',
-    nome: 'Usuário Demo',
-    telefone: '+55 11 99999-9999',
-    email: null,
-    saldo: 127.50,
-    totalGasto: 234.90,
-    totalGanho: 189.75,
-    nivel: 3,
-    pontosXp: 285,
-    verificado: false,
-    status: 'ativo'
-  },
-  isAuthenticated: true,
+  // User data - inicializar vazio para ser preenchido dinamicamente
+  user: null,
+  isAuthenticated: false,
 
   // Cache básico
   caixasCache: null,
@@ -192,6 +181,135 @@ const storeImpl: StateCreator<AppState> = (set, get) => ({
   updateUserBalance: (novoSaldo: number) => set((state) => ({
     user: state.user ? { ...state.user, saldo: novoSaldo } : null
   })),
+
+  initializeUser: async (userId: string) => {
+    try {
+      set({ loading: true })
+      
+      // Buscar dados do usuário autenticado do Supabase Auth
+      const { supabase } = await import('../lib/supabase')
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+      
+      if (authError || !authUser) {
+        console.error('❌ Usuário não autenticado:', authError)
+        throw new Error('Sessão inválida')
+      }
+
+      // Verificar se o usuário existe na tabela usuarios
+      // Primeiro tenta buscar por email (caso usuário já exista com email igual)
+      let { data: usuarioData, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('email', authUser.email)
+        .single()
+
+      // Se não encontrou por email, tenta por ID
+      if (error && error.code === 'PGRST116') {
+        const { data: usuarioPorId, error: errorId } = await supabase
+          .from('usuarios')
+          .select('*')
+          .eq('id', userId)
+          .single()
+        
+        usuarioData = usuarioPorId
+        error = errorId
+      }
+
+      if (error && error.code === 'PGRST116') {
+        // Usuário não existe na tabela - criar com dados do Auth
+        console.log('🔄 Criando perfil de usuário na primeira vez...')
+        const { data: newUser, error: insertError } = await supabase
+          .from('usuarios')
+          .insert([{
+            id: authUser.id,
+            nome: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'Usuário',
+            cpf: authUser.user_metadata?.cpf || null,
+            telefone: authUser.user_metadata?.telefone || null,
+            email: authUser.email || null,
+            saldo: 0.00, // Saldo inicial zerado - usuários devem depositar
+            total_gasto: 0,
+            total_ganho: 0,
+            nivel: 1,
+            pontos_xp: 0,
+            verificado: !!authUser.email_confirmed_at,
+            status: 'ativo',
+            atualizado_em: new Date().toISOString(),
+            ultimo_login_em: new Date().toISOString()
+          }])
+          .select()
+          .single()
+
+        if (insertError) {
+          console.error('❌ Erro ao criar usuário:', insertError)
+          throw insertError
+        }
+        usuarioData = newUser
+      } else if (error) {
+        console.error('❌ Erro ao buscar usuário:', error)
+        throw error
+      }
+
+      // Buscar saldo atualizado usando CarteiraAPI
+      try {
+        const { CarteiraAPI } = await import('../lib/carteiraAPI')
+        const saldoInfo = await CarteiraAPI.buscarSaldo(userId)
+        
+        // Atualizar saldo na tabela se houver diferença
+        if (saldoInfo.saldoAtual !== usuarioData.saldo) {
+          await supabase
+            .from('usuarios')
+            .update({ 
+              saldo: saldoInfo.saldoAtual,
+              total_gasto: saldoInfo.totalGasto,
+              total_ganho: saldoInfo.totalGanho
+            })
+            .eq('id', userId)
+          
+          usuarioData.saldo = saldoInfo.saldoAtual
+          usuarioData.total_gasto = saldoInfo.totalGasto
+          usuarioData.total_ganho = saldoInfo.totalGanho
+        }
+      } catch (saldoError) {
+        console.warn('⚠️ Erro ao atualizar saldo, usando dados da tabela:', saldoError)
+      }
+
+      // Criar objeto de usuário com dados reais
+      const userData: AppUser = {
+        id: usuarioData.id,
+        nome: usuarioData.nome,
+        telefone: usuarioData.telefone,
+        email: usuarioData.email,
+        saldo: usuarioData.saldo,
+        totalGasto: usuarioData.total_gasto,
+        totalGanho: usuarioData.total_ganho,
+        nivel: usuarioData.nivel,
+        pontosXp: usuarioData.pontos_xp,
+        verificado: usuarioData.verificado,
+        status: usuarioData.status
+      }
+
+      set({
+        user: userData,
+        isAuthenticated: true,
+        loading: false
+      })
+
+      console.log('✅ Usuário autenticado inicializado:', {
+        id: userData.id,
+        nome: userData.nome,
+        email: userData.email,
+        saldo: userData.saldo
+      })
+    } catch (error) {
+      console.error('❌ Erro ao inicializar usuário autenticado:', error)
+      set({ 
+        user: null, 
+        isAuthenticated: false, 
+        loading: false 
+      })
+      throw error
+    }
+  },
 
   // ==============================================
   // ACTIONS - CACHE
@@ -349,6 +467,7 @@ export const useUser = () => useAppStore((state) => ({
   login: state.login,
   logout: state.logout,
   updateUser: state.updateUser,
+  initializeUser: state.initializeUser,
 }))
 
 // Hook para notificações

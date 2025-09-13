@@ -1,9 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { 
   User, 
-  Phone, 
+  Lock, 
   LogIn,
   UserPlus,
   Gift,
@@ -11,8 +11,10 @@ import {
   Shield,
   Zap,
   Mail,
+  Eye,
+  EyeOff,
   CreditCard,
-  CheckSquare
+  Phone
 } from 'lucide-react'
 
 // Gaming Components
@@ -23,171 +25,147 @@ import HorizontalLiveFeed from '../components/ui/HorizontalLiveFeed'
 // Hooks
 import { useUser, useNotifications } from '../stores/useAppStore'
 import { triggerHaptic } from '../lib/utils'
-import { AuthService } from '../lib/auth'
+import { supabase } from '../lib/supabase'
 
 const LoginPage = () => {
   const navigate = useNavigate()
-  const { login } = useUser()
-  const { addNotification } = useNotifications()
+  const { isAuthenticated } = useUser()
+  const { showSuccess, showError } = useNotifications()
   
   const [formData, setFormData] = useState({
-    telefone: '',
-    nome: '',
     email: '',
+    password: '',
+    confirmPassword: '',
+    name: '',
     cpf: '',
-    aceitaTermos: false
+    telefone: ''
   })
-  const [isRegistro, setIsRegistro] = useState(false)
+  const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  // Redirecionar se já estiver autenticado
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true })
+    }
+  }, [isAuthenticated, navigate])
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     }))
   }
 
-  const calcularIdade = (dataNascimento) => {
-    if (!dataNascimento) return 0
-    const hoje = new Date()
-    const nascimento = new Date(dataNascimento)
-    let idade = hoje.getFullYear() - nascimento.getFullYear()
-    const mesAtual = hoje.getMonth()
-    const mesNascimento = nascimento.getMonth()
-    
-    if (mesAtual < mesNascimento || (mesAtual === mesNascimento && hoje.getDate() < nascimento.getDate())) {
-      idade--
+  const validateForm = () => {
+    if (!formData.email.trim()) {
+      showError('Email é obrigatório')
+      return false
     }
-    
-    return idade
+
+    if (!formData.email.includes('@')) {
+      showError('Email inválido')
+      return false
+    }
+
+    if (!formData.password.trim()) {
+      showError('Senha é obrigatória')
+      return false
+    }
+
+    if (formData.password.length < 6) {
+      showError('Senha deve ter pelo menos 6 caracteres')
+      return false
+    }
+
+    if (isSignUp) {
+      if (!formData.name.trim()) {
+        showError('Nome é obrigatório')
+        return false
+      }
+
+      if (!formData.cpf.trim()) {
+        showError('CPF é obrigatório')
+        return false
+      }
+
+      if (!formData.telefone.trim()) {
+        showError('Telefone é obrigatório')
+        return false
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        showError('Senhas não coincidem')
+        return false
+      }
+    }
+
+    return true
   }
 
-  const handleSubmit = async () => {
-    if (!formData.telefone.trim()) {
-      addNotification({
-        type: 'error',
-        title: 'Campo obrigatório',
-        message: 'Informe seu telefone',
-        duration: 3000
-      })
-      return
-    }
+  const handleSubmit = async (e) => {
+    e.preventDefault()
 
-    if (isRegistro && !formData.nome.trim()) {
-      addNotification({
-        type: 'error',
-        title: 'Campo obrigatório',
-        message: 'Informe seu nome',
-        duration: 3000
-      })
-      return
-    }
-
-    if (isRegistro && !formData.dataNascimento) {
-      addNotification({
-        type: 'error',
-        title: 'Campo obrigatório',
-        message: 'Informe sua data de nascimento',
-        duration: 3000
-      })
-      return
-    }
-
-    if (isRegistro && calcularIdade(formData.dataNascimento) < 18) {
-      addNotification({
-        type: 'error',
-        title: 'Idade mínima não atingida',
-        message: 'Você deve ter 18 anos ou mais para se cadastrar',
-        duration: 5000
-      })
-      return
-    }
-
-    if (isRegistro && !formData.aceitaTermos) {
-      addNotification({
-        type: 'error',
-        title: 'Termos obrigatórios',
-        message: 'Você deve aceitar os termos de uso (+18 anos)',
-        duration: 5000
-      })
-      return
-    }
+    if (!validateForm()) return
 
     setLoading(true)
     triggerHaptic('medium')
 
     try {
-      let result
+      if (isSignUp) {
+        // Cadastro
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              name: formData.name,
+              cpf: formData.cpf,
+              telefone: formData.telefone
+            }
+          }
+        })
 
-      if (isRegistro) {
-        // Registro de novo usuário
-        result = await AuthService.registro({
-          nome: formData.nome,
-          telefone: formData.telefone,
-          email: formData.email || null,
-          dataNascimento: formData.dataNascimento || null
-        })
-        
-        addNotification({
-          type: 'success',
-          title: '🎉 Conta criada!',
-          message: `Bem-vindo, ${result.usuario.nome}!`,
-          duration: 3000
-        })
-      } else {
-        // Login de usuário existente
-        result = await AuthService.login({
-          telefone: formData.telefone
-        })
-        
-        addNotification({
-          type: 'success',
-          title: '🎮 Login realizado!',
-          message: `Bem-vindo de volta, ${result.usuario.nome}!`,
-          duration: 3000
-        })
-      }
+        if (error) throw error
 
-      // Fazer login no store
-      login(result.usuario, result.token)
-      
-      // Navegar para home
-      setTimeout(() => {
-        navigate('/')
-      }, 1000)
-
-    } catch (error) {
-      console.error('Erro no auth:', error)
-      
-      // Se erro for "usuário não encontrado" no login, sugerir registro
-      if (error.message.includes('não encontrado') && !isRegistro) {
-        addNotification({
-          type: 'warning',
-          title: 'Usuário não encontrado',
-          message: 'Que tal se cadastrar? É rápido e grátis!',
-          duration: 5000
-        })
-        setIsRegistro(true)
-      } else {
-        let errorMessage = 'Tente novamente em alguns instantes'
-        
-        // Mensagens mais específicas para diferentes tipos de erro
-        if (error.message.includes('row-level security')) {
-          errorMessage = 'Sistema temporariamente indisponível. Tente novamente mais tarde.'
-        } else if (error.message.includes('duplicate key') || error.message.includes('already exists')) {
-          errorMessage = 'Este telefone já está cadastrado. Tente fazer login.'
-          if (isRegistro) setIsRegistro(false)
-        } else if (error.message.includes('network') || error.message.includes('fetch')) {
-          errorMessage = 'Erro de conexão. Verifique sua internet.'
+        if (data.user && data.user.email_confirmed_at) {
+          // Usuário já confirmado
+          showSuccess(`Bem-vindo, ${formData.name}! Conta criada com sucesso.`)
+        } else {
+          // Aguardando confirmação por email
+          showSuccess('Conta criada! Verifique seu email para confirmar.')
         }
         
-        addNotification({
-          type: 'error',
-          title: isRegistro ? 'Erro no cadastro' : 'Erro no login',
-          message: errorMessage,
-          duration: 5000
+      } else {
+        // Login
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password
         })
+
+        if (error) throw error
+
+        const userName = data.user?.user_metadata?.name || data.user?.email?.split('@')[0] || 'Usuário'
+        showSuccess(`Bem-vindo de volta, ${userName}!`)
+        
+        // A navegação será feita automaticamente pelo useEffect quando isAuthenticated mudar
+      }
+
+    } catch (error) {
+      console.error('❌ Erro na autenticação:', error)
+      
+      // Mensagens de erro personalizadas
+      if (error.message.includes('Invalid login credentials')) {
+        showError('Email ou senha incorretos')
+      } else if (error.message.includes('Email not confirmed')) {
+        showError('Confirme seu email antes de fazer login')
+      } else if (error.message.includes('User already registered')) {
+        showError('Este email já está cadastrado')
+      } else {
+        showError(error.message || 'Erro na autenticação')
       }
     } finally {
       setLoading(false)
@@ -195,258 +173,271 @@ const LoginPage = () => {
   }
 
   const toggleMode = () => {
-    setIsRegistro(!isRegistro)
-    setFormData({ 
-      telefone: '', 
-      nome: '', 
-      email: '', 
-      dataNascimento: '', 
-      aceitaTermos: false 
+    setIsSignUp(!isSignUp)
+    setFormData({
+      email: '',
+      password: '',
+      confirmPassword: '',
+      name: '',
+      cpf: '',
+      telefone: ''
     })
-    triggerHaptic('light')
+    setShowPassword(false)
+    setShowConfirmPassword(false)
   }
 
   return (
-    <div className="landing min-h-screen bg-luxdrop-hero relative">
-      {/* LuxDrop Background Pattern */}
-      <div className="fixed inset-0 opacity-10 pointer-events-none">
-        <div 
-          className="w-full h-full"
-          style={{
-            backgroundImage: 'radial-gradient(circle at 25% 25%, #22b5ff 1px, transparent 1px)',
-            backgroundSize: '50px 50px'
-          }}
-        />
+    <div className="min-h-screen bg-brutal-black flex flex-col">
+      {/* Live Feed de Ganhadores */}
+      <div className="w-full">
+        <HorizontalLiveFeed />
       </div>
 
-      {/* Live Feed Bar */}
-      <HorizontalLiveFeed />
+      <div className="flex-1 flex items-center justify-center p-4">
+        <GamingContainer className="w-full max-w-md">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="text-center mb-8"
+          >
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-neon-purple to-neon-blue rounded-2xl mb-4">
+              <Gift className="w-10 h-10 text-white" />
+            </div>
+            
+            <h1 className="text-3xl font-black text-white mb-2">
+              {isSignUp ? 'CRIAR CONTA' : 'ENTRAR'}
+            </h1>
+            
+            <p className="text-gray-300 text-sm">
+              {isSignUp 
+                ? 'Junte-se a milhares de players!' 
+                : 'Bem-vindo de volta, jogador!'
+              }
+            </p>
+          </motion.div>
 
-      {/* Main Content */}
-      <div className="relative z-10 px-4 py-8 pt-32">
-        <motion.div
-          className="w-full max-w-md mx-auto"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          layout
-        >
-          <motion.div layout>
-            <GamingContainer>
-            {/* Header */}
-            <motion.div 
-              className="text-center mb-8"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.6 }}
-            >
-              <div className="flex justify-center mb-4">
-                <motion.div
-                  className="bg-gradient-to-br from-blue-500 to-purple-600 p-4 rounded-2xl"
-                  whileHover={{ scale: 1.05, rotate: [0, -5, 5, 0] }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <Sparkles className="w-8 h-8 text-white" />
-                </motion.div>
-              </div>
-              
-              <h1 className="text-3xl font-gaming-display font-black text-white mb-2 tracking-wider">
-                {isRegistro ? 'CRIAR CONTA' : 'ENTRAR'}
-              </h1>
-              <p className="text-gray-300 text-sm leading-relaxed">
-                {isRegistro 
-                  ? 'Comece sua jornada nas mystery boxes!' 
-                  : 'Acesse sua conta e continue jogando'
-                }
-              </p>
-            </motion.div>
-
-            {/* Form */}
-            <div className="space-y-4">
-              {/* Campo Nome (apenas no registro) */}
-              {isRegistro && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="relative">
-                    <User className="absolute left-4 top-4 w-5 h-5 text-gray-400" />
-                    <input
-                      type="text"
-                      name="nome"
-                      value={formData.nome}
-                      onChange={handleInputChange}
-                      placeholder="Seu nome"
-                      className="w-full pl-12 pr-4 py-4 bg-dark-200/50 border border-gray-600 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
-                      disabled={loading}
-                    />
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Campo Telefone */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Nome (apenas no cadastro) */}
+            {isSignUp && (
               <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: isRegistro ? 0.1 : 0 }}
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
               >
+                <label className="block text-sm font-semibold text-white mb-2">
+                  Nome Completo
+                </label>
                 <div className="relative">
-                  <Phone className="absolute left-4 top-4 w-5 h-5 text-gray-400" />
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className="w-full bg-gray-800/50 border border-gray-600 rounded-xl pl-11 pr-4 py-3 text-white placeholder-gray-400 focus:border-neon-purple focus:outline-none transition-colors"
+                    placeholder="Seu nome completo"
+                    disabled={loading}
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {/* CPF (apenas no cadastro) */}
+            {isSignUp && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <label className="block text-sm font-semibold text-white mb-2">
+                  CPF
+                </label>
+                <div className="relative">
+                  <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    name="cpf"
+                    value={formData.cpf}
+                    onChange={handleInputChange}
+                    className="w-full bg-gray-800/50 border border-gray-600 rounded-xl pl-11 pr-4 py-3 text-white placeholder-gray-400 focus:border-neon-purple focus:outline-none transition-colors"
+                    placeholder="000.000.000-00"
+                    disabled={loading}
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {/* Telefone (apenas no cadastro) */}
+            {isSignUp && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <label className="block text-sm font-semibold text-white mb-2">
+                  Telefone
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="tel"
                     name="telefone"
                     value={formData.telefone}
                     onChange={handleInputChange}
-                    placeholder="(11) 99999-9999"
-                    className="w-full pl-12 pr-4 py-4 bg-dark-200/50 border border-gray-600 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-gray-800/50 border border-gray-600 rounded-xl pl-11 pr-4 py-3 text-white placeholder-gray-400 focus:border-neon-purple focus:outline-none transition-colors"
+                    placeholder="(11) 99999-0000"
                     disabled={loading}
                   />
                 </div>
               </motion.div>
+            )}
 
-              {/* Campo Email (apenas no registro) */}
-              {isRegistro && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: 0.2 }}
-                >
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-4 w-5 h-5 text-gray-400" />
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      placeholder="seu@email.com (opcional)"
-                      className="w-full pl-12 pr-4 py-4 bg-dark-200/50 border border-gray-600 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
-                      disabled={loading}
-                    />
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Campo Data de Nascimento (apenas no registro) */}
-              {isRegistro && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: 0.3 }}
-                >
-                  <div className="relative">
-                    <CreditCard className="absolute left-4 top-4 w-5 h-5 text-gray-400" />
-                    <input
-                      type="date"
-                      name="dataNascimento"
-                      value={formData.dataNascimento}
-                      onChange={handleInputChange}
-                      className="w-full pl-12 pr-4 py-4 bg-dark-200/50 border border-gray-600 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
-                      disabled={loading}
-                      max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1 ml-1">Você deve ter 18 anos ou mais</p>
-                </motion.div>
-              )}
-
-              {/* Checkbox Termos (apenas no registro) */}
-              {isRegistro && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: 0.4 }}
-                  className="flex items-start gap-3 p-4 bg-dark-200/30 rounded-xl border border-gray-600"
-                >
-                  <input
-                    type="checkbox"
-                    name="aceitaTermos"
-                    checked={formData.aceitaTermos}
-                    onChange={handleInputChange}
-                    className="mt-1 w-5 h-5 text-blue-500 bg-white border-2 border-gray-400 rounded focus:ring-blue-500 focus:ring-2 checked:bg-blue-500 checked:border-blue-500"
-                    disabled={loading}
-                  />
-                  <div className="text-sm text-gray-300 leading-relaxed">
-                    <p>
-                      Declaro que tenho <strong className="text-white">18 anos ou mais</strong> e aceito os{' '}
-                      <a href="/termos" target="_blank" className="text-blue-400 hover:text-blue-300 underline">
-                        Termos de Uso
-                      </a>{' '}
-                      e{' '}
-                      <a href="/privacidade" target="_blank" className="text-blue-400 hover:text-blue-300 underline">
-                        Política de Privacidade
-                      </a>
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Botão Principal */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-                className="pt-4"
-              >
-                <GamingButton
-                  variant="primary"
-                  size="lg"
-                  onClick={handleSubmit}
-                  loading={loading}
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-semibold text-white mb-2">
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full bg-gray-800/50 border border-gray-600 rounded-xl pl-11 pr-4 py-3 text-white placeholder-gray-400 focus:border-neon-purple focus:outline-none transition-colors"
+                  placeholder="seu@email.com"
                   disabled={loading}
-                  icon={isRegistro ? UserPlus : LogIn}
-                  arrowAnimation={true}
-                  className="w-full"
-                >
-                  {isRegistro ? 'Criar Conta' : 'Entrar'}
-                </GamingButton>
-              </motion.div>
-
-              {/* Toggle Mode */}
-              <motion.div
-                className="text-center pt-6"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4, duration: 0.3 }}
-              >
-                <p className="text-gray-400 text-sm mb-3">
-                  {isRegistro ? 'Já tem uma conta?' : 'Novo por aqui?'}
-                </p>
-                <GamingButton
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleMode}
-                  disabled={loading}
-                  className="px-6"
-                >
-                  {isRegistro ? 'Fazer Login' : 'Criar Conta'}
-                </GamingButton>
-              </motion.div>
+                />
+              </div>
             </div>
 
-            {/* Features */}
-            <motion.div
-              className="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-gray-700"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.4 }}
+            {/* Senha */}
+            <div>
+              <label className="block text-sm font-semibold text-white mb-2">
+                Senha
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="w-full bg-gray-800/50 border border-gray-600 rounded-xl pl-11 pr-12 py-3 text-white placeholder-gray-400 focus:border-neon-purple focus:outline-none transition-colors"
+                  placeholder="Sua senha"
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                  disabled={loading}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Confirmar Senha (apenas no cadastro) */}
+            {isSignUp && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <label className="block text-sm font-semibold text-white mb-2">
+                  Confirmar Senha
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    className="w-full bg-gray-800/50 border border-gray-600 rounded-xl pl-11 pr-12 py-3 text-white placeholder-gray-400 focus:border-neon-purple focus:outline-none transition-colors"
+                    placeholder="Confirme sua senha"
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                    disabled={loading}
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Botão Principal */}
+            <GamingButton
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 text-lg font-black"
+              variant="primary"
             >
-              <div className="text-center">
-                <Shield className="w-6 h-6 text-green-400 mx-auto mb-2" />
-                <p className="text-xs text-gray-300 font-medium">Seguro</p>
+              {loading ? (
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  {isSignUp ? 'CRIANDO CONTA...' : 'ENTRANDO...'}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-3">
+                  {isSignUp ? <UserPlus className="w-5 h-5" /> : <LogIn className="w-5 h-5" />}
+                  {isSignUp ? 'CRIAR CONTA' : 'ENTRAR'}
+                </div>
+              )}
+            </GamingButton>
+
+            {/* Toggle entre Login/Cadastro */}
+            <div className="text-center pt-4">
+              <p className="text-gray-300 text-sm">
+                {isSignUp ? 'Já tem uma conta?' : 'Não tem conta ainda?'}
+              </p>
+              <button
+                type="button"
+                onClick={toggleMode}
+                className="text-neon-purple font-semibold hover:text-neon-blue transition-colors mt-1"
+                disabled={loading}
+              >
+                {isSignUp ? 'Fazer Login' : 'Criar Conta'}
+              </button>
+            </div>
+          </form>
+
+          {/* Features */}
+          <div className="mt-8 pt-6 border-t border-gray-700">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-green-500/20 to-green-400/20 rounded-xl flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-green-400" />
+                </div>
+                <span className="text-xs text-gray-300">Seguro</span>
               </div>
-              <div className="text-center">
-                <Zap className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
-                <p className="text-xs text-gray-300 font-medium">Rápido</p>
+              
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-blue-400/20 rounded-xl flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-blue-400" />
+                </div>
+                <span className="text-xs text-gray-300">Rápido</span>
               </div>
-              <div className="text-center">
-                <Gift className="w-6 h-6 text-purple-400 mx-auto mb-2" />
-                <p className="text-xs text-gray-300 font-medium">Prêmios</p>
+              
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500/20 to-purple-400/20 rounded-xl flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-purple-400" />
+                </div>
+                <span className="text-xs text-gray-300">Épico</span>
               </div>
-            </motion.div>
-          </GamingContainer>
-          </motion.div>
-        </motion.div>
+            </div>
+          </div>
+        </GamingContainer>
       </div>
     </div>
   )
