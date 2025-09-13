@@ -5,7 +5,7 @@ import { WifiOff, Wifi } from 'lucide-react'
 // Hooks
 import { usePWA } from '../../stores/useAppStore'
 
-const OfflineIndicator = () => {
+const OfflineIndicator: React.FC = () => {
   const { isOnline } = usePWA()
 
   return (
@@ -38,9 +38,9 @@ const OfflineIndicator = () => {
 }
 
 // Componente para mostrar quando volta online
-export const OnlineIndicator = () => {
+export const OnlineIndicator: React.FC = () => {
   const { isOnline } = usePWA()
-  const [showOnlineMessage, setShowOnlineMessage] = React.useState(false)
+  const [showOnlineMessage, setShowOnlineMessage] = React.useState<boolean>(false)
 
   React.useEffect(() => {
     if (isOnline) {

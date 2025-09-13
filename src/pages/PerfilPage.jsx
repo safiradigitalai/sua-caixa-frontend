@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   User, 
@@ -15,7 +16,15 @@ import {
   LogOut,
   Crown,
   Star,
-  Package
+  Package,
+  History,
+  CreditCard,
+  Plus,
+  Minus,
+  RefreshCw,
+  X,
+  QrCode,
+  Download
 } from 'lucide-react'
 
 // Components
@@ -24,480 +33,981 @@ import { ListLoadingSkeleton, LoadingSpinner } from '../components/ui/LoadingSke
 import TransparencyModal from '../components/modals/TransparencyModal'
 import RaridadeBadge from '../components/ui/RaridadeBadge'
 import { MysteryBox, CasinoPokerChip, TreasureChest, DiamondBox } from '../components/ui/CasinoIcons'
+import GamingButton from '../components/ui/GamingButton'
+import HorizontalLiveFeed from '../components/ui/HorizontalLiveFeed'
 
 // Hooks
-import { useApi } from '../hooks/useApi'
 import { useUser, useNotifications } from '../stores/useAppStore'
+import { UserAPI } from '../lib/userAPI'
+import { CarteiraAPI } from '../lib/carteiraAPI'
 
 // Utils
 import { formatCurrency, formatDate, triggerHaptic, cn } from '../lib/utils'
 
 const PerfilPage = () => {
-  const [activeTab, setActiveTab] = useState('itens') // itens, historico, stats
+  const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState('perfil') // perfil, carteira, itens, historico
   const [showTransparency, setShowTransparency] = useState(false)
   const [selectedCompra, setSelectedCompra] = useState(null)
   const [copiedId, setCopiedId] = useState('')
   
-  const { user, logout } = useUser()
+  // Estados para dados reais
+  const [perfilData, setPerfilData] = useState(null)
+  const [itensGanhos, setItensGanhos] = useState([])
+  const [historico, setHistorico] = useState([])
+  const [historicoCarteira, setHistoricoCarteira] = useState([])
+  const [loading, setLoading] = useState(true)
+  
+  // Estados para carteira
+  const [showDeposito, setShowDeposito] = useState(false)
+  const [showSaque, setShowSaque] = useState(false)
+  const [valorDeposito, setValorDeposito] = useState('')
+  const [valorSaque, setValorSaque] = useState('')
+  const [pixChave, setPixChave] = useState('')
+  const [tipoChave, setTipoChave] = useState('cpf')
+  const [qrCodeData, setQrCodeData] = useState(null)
+  const [loadingPagamento, setLoadingPagamento] = useState(false)
+  const [saldoAtual, setSaldoAtual] = useState(0)
+  
+  const { user, logout, isAuthenticated } = useUser()
   const { addNotification } = useNotifications()
 
-  // Buscar dados do perfil
-  const { data: perfilData, loading } = useApi('/usuario/perfil', {
-    enabled: !!user?.id
-  })
+  // Proteção: Redirecionar se não autenticado
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login')
+      return
+    }
+  }, [isAuthenticated, navigate])
 
-  const { data: itensGanhos, loading: itensLoading } = useApi('/usuario/itens', {
-    enabled: !!user?.id && activeTab === 'itens'
-  })
+  // Se não autenticado, não renderizar nada
+  if (!isAuthenticated) {
+    return null
+  }
 
-  const { data: historico, loading: historicoLoading } = useApi('/usuario/historico', {
-    enabled: !!user?.id && activeTab === 'historico'
-  })
+  // Carregar dados do perfil
+  useEffect(() => {
+    if (user?.id) {
+      carregarDadosPerfil()
+      atualizarSaldo()
+    }
+  }, [user?.id, activeTab])
+
+  const carregarDadosPerfil = async () => {
+    if (!user?.id) return
+
+    setLoading(true)
+    try {
+      // Sempre carregar perfil básico
+      const dadosPerfil = await UserAPI.buscarPerfil(user.id)
+      setPerfilData(dadosPerfil)
+
+      // Carregar dados específicos da aba ativa
+      if (activeTab === 'itens') {
+        const itens = await UserAPI.buscarItensGanhos(user.id)
+        setItensGanhos(itens)
+      } else if (activeTab === 'historico') {
+        const hist = await UserAPI.buscarHistoricoCompras(user.id)
+        setHistorico(hist)
+      } else if (activeTab === 'carteira') {
+        const histCarteira = await UserAPI.buscarHistoricoCarteira(user.id)
+        setHistoricoCarteira(histCarteira)
+      }
+
+    } catch (error) {
+      console.error('Erro ao carregar perfil:', error)
+      addNotification({
+        type: 'error',
+        title: 'Erro ao carregar dados',
+        message: error.message || 'Tente novamente',
+        duration: 5000
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const {
+    usuario = {},
     estatisticas = {},
-    nivel = 1,
-    proximoNivel = {},
-    conquistas = []
+    ranking = {}
   } = perfilData || {}
 
-  // Handlers
-  const handleCopyId = async (id, type) => {
+  const nivelInfo = UserAPI.calcularNivel(usuario.pontosXp || 0)
+
+  const handleCopyId = async (id) => {
     try {
       await navigator.clipboard.writeText(id)
       setCopiedId(id)
-      triggerHaptic('light')
+      triggerHaptic('success')
+      addNotification({
+        type: 'success',
+        title: 'ID copiado!',
+        message: 'ID da compra copiado para área de transferência',
+        duration: 2000
+      })
+      setTimeout(() => setCopiedId(''), 2000)
+    } catch (error) {
+      console.error('Erro ao copiar:', error)
+    }
+  }
+
+  const handleLogout = () => {
+    triggerHaptic('medium')
+    logout()
+    
+    // Redirecionar imediatamente após logout
+    navigate('/login')
+  }
+
+  // Funções da Carteira
+  const atualizarSaldo = async () => {
+    try {
+      const saldoInfo = await CarteiraAPI.buscarSaldo(user.id)
+      setSaldoAtual(saldoInfo.saldoAtual)
+    } catch (error) {
+      console.error('Erro ao atualizar saldo:', error)
+    }
+  }
+
+  // Função temporária para teste - adicionar R$ 100
+  const adicionarSaldeTeste = async () => {
+    try {
+      // Usar função interna do CarteiraAPI para teste
+      await CarteiraAPI.atualizarSaldo(user.id, 100, 'teste_saldo_manual')
       
       addNotification({
         type: 'success',
-        message: `${type} copiado para área de transferência`
+        title: '💰 Saldo Adicionado!',
+        message: 'R$ 100,00 adicionados para teste',
+        duration: 3000
       })
-
-      setTimeout(() => setCopiedId(''), 2000)
+      
+      // Atualizar interface
+      await atualizarSaldo()
+      await carregarDadosPerfil()
+      
     } catch (error) {
+      console.error('Erro ao adicionar saldo:', error)
       addNotification({
         type: 'error',
-        message: 'Erro ao copiar ID'
+        title: 'Erro ao adicionar saldo',
+        message: error.message || 'Tente novamente',
+        duration: 3000
       })
     }
   }
 
-  const handleOpenTransparency = (compra) => {
-    setSelectedCompra(compra)
-    setShowTransparency(true)
+  const handleDeposito = async () => {
+    const valor = parseFloat(valorDeposito.replace(',', '.'))
+    
+    if (!valor || valor < 1) {
+      addNotification({
+        type: 'error',
+        title: 'Valor inválido',
+        message: 'Valor mínimo para depósito é R$ 1,00',
+        duration: 3000
+      })
+      return
+    }
+
+    if (valor > 5000) {
+      addNotification({
+        type: 'error',
+        title: 'Valor muito alto',
+        message: 'Valor máximo para depósito é R$ 5.000,00',
+        duration: 3000
+      })
+      return
+    }
+
+    setLoadingPagamento(true)
+    triggerHaptic('medium')
+
+    try {
+      const resultado = await CarteiraAPI.criarDepositoPIX({
+        usuarioId: user.id,
+        valor,
+        descricao: 'Depósito via PIX'
+      })
+
+      setQrCodeData(resultado)
+      
+      addNotification({
+        type: 'success',
+        title: 'PIX Gerado!',
+        message: 'QR Code criado. Pague para adicionar saldo.',
+        duration: 5000
+      })
+
+      // Monitorar pagamento
+      CarteiraAPI.monitorarPagamento(resultado.id, (status) => {
+        if (status.status === 'confirmado') {
+          addNotification({
+            type: 'success',
+            title: '🎉 Pagamento Confirmado!',
+            message: `R$ ${valor.toFixed(2)} adicionado ao seu saldo`,
+            duration: 5000
+          })
+          setShowDeposito(false)
+          setQrCodeData(null)
+          setValorDeposito('')
+          atualizarSaldo()
+          carregarDadosPerfil()
+        } else if (status.status === 'expirado') {
+          addNotification({
+            type: 'warning',
+            title: 'PIX Expirado',
+            message: 'Gere um novo PIX para fazer o depósito',
+            duration: 5000
+          })
+          setQrCodeData(null)
+        }
+      })
+
+    } catch (error) {
+      console.error('Erro depósito:', error)
+      addNotification({
+        type: 'error',
+        title: 'Erro no depósito',
+        message: error.message || 'Tente novamente',
+        duration: 5000
+      })
+    } finally {
+      setLoadingPagamento(false)
+    }
   }
 
-  const handleLogout = () => {
-    logout()
-    addNotification({
-      type: 'info',
-      message: 'Você foi desconectado'
-    })
+  const handleSaque = async () => {
+    const valor = parseFloat(valorSaque.replace(',', '.'))
+    
+    if (!valor || valor < 10) {
+      addNotification({
+        type: 'error',
+        title: 'Valor inválido',
+        message: 'Valor mínimo para saque é R$ 10,00',
+        duration: 3000
+      })
+      return
+    }
+
+    if (!pixChave.trim()) {
+      addNotification({
+        type: 'error',
+        title: 'Chave PIX obrigatória',
+        message: 'Informe sua chave PIX para receber o saque',
+        duration: 3000
+      })
+      return
+    }
+
+    setLoadingPagamento(true)
+    triggerHaptic('medium')
+
+    try {
+      const resultado = await CarteiraAPI.solicitarSaque({
+        usuarioId: user.id,
+        valor,
+        pixChave,
+        tipoChave
+      })
+
+      addNotification({
+        type: 'success',
+        title: '💰 Saque Solicitado!',
+        message: resultado.mensagem,
+        duration: 8000
+      })
+
+      setShowSaque(false)
+      setValorSaque('')
+      setPixChave('')
+      atualizarSaldo()
+      carregarDadosPerfil()
+
+    } catch (error) {
+      console.error('Erro saque:', error)
+      addNotification({
+        type: 'error',
+        title: 'Erro no saque',
+        message: error.message || 'Tente novamente',
+        duration: 5000
+      })
+    } finally {
+      setLoadingPagamento(false)
+    }
   }
 
-  const tabs = [
-    { id: 'itens', label: 'Meus Itens', icon: Gift },
-    { id: 'historico', label: 'Histórico', icon: Calendar },
-    { id: 'stats', label: 'Estatísticas', icon: TrendingUp }
-  ]
-
-  const conquistas_mock = [
-    { id: 1, nome: 'Primeira Caixa', descricao: 'Abriu sua primeira caixa', conquistado: true, icone: MysteryBox },
-    { id: 2, nome: 'Sortudo', descricao: 'Ganhou um item lendário', conquistado: true, icone: DiamondBox },
-    { id: 3, nome: 'Colecionador', descricao: 'Possua 10 itens diferentes', conquistado: false, icone: TreasureChest },
-    { id: 4, nome: 'High Roller', descricao: 'Gaste R$ 100 em caixas', conquistado: false, icone: CasinoPokerChip }
-  ]
+  const handleTabChange = (tab) => {
+    setActiveTab(tab)
+    triggerHaptic('light')
+  }
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-gray-600 to-gray-700 rounded-2xl flex items-center justify-center backdrop-blur-gaming shadow-gaming">
-            <User className="w-10 h-10 text-gray-400" />
-          </div>
-          <h3 className="text-xl font-bold text-gray-300 mb-2">Login Required</h3>
-          <p className="text-gray-400">Please login to view your profile</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-gray-400">Você precisa fazer login para ver seu perfil</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="container-gaming py-8 space-y-6">
-        {/* Profile Header Gaming */}
+    <div className="min-h-screen bg-luxdrop-hero relative">
+      {/* Live Feed Bar */}
+      <HorizontalLiveFeed />
+      
+      {/* Main Content */}
+      <div className="relative z-10 p-4 pb-24 pt-20">
+        {/* Header do Perfil */}
         <motion.div
-          className="bg-black/20 backdrop-blur-gaming border border-white/10 rounded-2xl p-6 shadow-gaming"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="flex items-start gap-4">
-            {/* Avatar */}
-            <div className="relative">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center shrink-0 shadow-gaming">
-                <span className="text-2xl font-bold text-white">
-                  {user.nome?.charAt(0)?.toUpperCase() || '?'}
-                </span>
+        className="mb-6"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="bg-gradient-to-r from-blue-900/50 to-purple-900/50 backdrop-blur-md rounded-2xl p-6 border border-blue-500/30">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
+                <User className="w-8 h-8 text-white" />
               </div>
-              
-              {/* Nível Badge */}
-              <div className="absolute -top-2 -right-2 bg-blue-trust text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
-                {nivel}
-              </div>
-            </div>
-
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-xl font-bold text-white truncate">
-                  {user.nome}
+              <div>
+                <h1 className="text-2xl font-gaming-display font-bold text-white mb-1">
+                  {usuario.nome || user.nome}
                 </h1>
-                {nivel >= 5 && (
-                  <Crown className="w-5 h-5 text-gold-primary" />
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2 text-sm text-gray-300 mb-3">
-                <Phone className="w-4 h-4" />
-                {user.telefone}
-              </div>
-
-              {/* Level Progress */}
-              {proximoNivel && (
-                <div>
-                  <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
-                    <span>Nível {nivel}</span>
-                    <span>{user.pontosXp || 0} / {proximoNivel.xpNecessario} XP</span>
-                  </div>
-                  <div className="w-full bg-gray-700 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-blue-400 to-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ 
-                        width: `${Math.min(100, ((user.pontosXp || 0) / proximoNivel.xpNecessario) * 100)}%`
-                      }}
-                    />
-                  </div>
+                <div className="flex items-center gap-2 text-gray-300 text-sm">
+                  <Phone className="w-4 h-4" />
+                  <span>{usuario.telefone || user.telefone}</span>
                 </div>
-              )}
+              </div>
             </div>
-
-            {/* Settings */}
-            <button
+            
+            <GamingButton
+              variant="outline"
+              size="sm"
               onClick={handleLogout}
-              className="btn-ghost p-2 text-gray-400 hover:text-red-400"
-              aria-label="Sair"
+              icon={LogOut}
             >
-              <LogOut className="w-5 h-5" />
-            </button>
+              Sair
+            </GamingButton>
           </div>
-        </motion.div>
 
-        {/* Stats Cards */}
-        <motion.div
-          className="grid grid-cols-2 md:grid-cols-4 gap-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-        >
-          <div className="bg-black/20 backdrop-blur-gaming border border-white/10 rounded-xl p-4 text-center shadow-gaming">
-            <Wallet className="w-6 h-6 text-green-400 mx-auto mb-2" />
-            <div className="text-lg font-bold text-green-success">
-              {formatCurrency(user.saldo || 0)}
+          {/* Estatísticas Rápidas */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-black/30 rounded-xl p-3 text-center">
+              <Wallet className="w-6 h-6 text-green-400 mx-auto mb-1" />
+              <p className="text-2xl font-bold text-white">
+                {formatCurrency(usuario.saldo || user.saldo || 0)}
+              </p>
+              <p className="text-xs text-gray-400">Saldo</p>
             </div>
-            <div className="text-xs text-gray-400">Saldo</div>
-          </div>
-          
-          <div className="bg-black/20 backdrop-blur-gaming border border-white/10 rounded-xl p-4 text-center shadow-gaming">
-            <Gift className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-            <div className="text-lg font-bold text-white">
-              {estatisticas.totalItens || 0}
+            
+            <div className="bg-black/30 rounded-xl p-3 text-center">
+              <Trophy className="w-6 h-6 text-yellow-400 mx-auto mb-1" />
+              <p className="text-2xl font-bold text-white">{nivelInfo.nivelAtual?.nivel || 1}</p>
+              <p className="text-xs text-gray-400">{nivelInfo.nivelAtual?.titulo || 'Novato'}</p>
             </div>
-            <div className="text-xs text-gray-400">Itens</div>
-          </div>
-          
-          <div className="bg-black/20 backdrop-blur-gaming border border-white/10 rounded-xl p-4 text-center">
-            <Package className="w-6 h-6 text-gold-primary mx-auto mb-2" />
-            <div className="text-lg font-bold text-white">
-              {estatisticas.caixasAbertas || 0}
+            
+            <div className="bg-black/30 rounded-xl p-3 text-center">
+              <Package className="w-6 h-6 text-purple-400 mx-auto mb-1" />
+              <p className="text-2xl font-bold text-white">{estatisticas.totalCompras || 0}</p>
+              <p className="text-xs text-gray-400">Caixas</p>
             </div>
-            <div className="text-xs text-gray-400">Caixas</div>
-          </div>
-          
-          <div className="bg-black/20 backdrop-blur-gaming border border-white/10 rounded-xl p-4 text-center">
-            <TrendingUp className="w-6 h-6 text-red-urgency mx-auto mb-2" />
-            <div className="text-lg font-bold text-white">
-              {formatCurrency(user.totalGanho || 0)}
+            
+            <div className="bg-black/30 rounded-xl p-3 text-center">
+              <Gift className="w-6 h-6 text-cyan-400 mx-auto mb-1" />
+              <p className="text-2xl font-bold text-white">{estatisticas.itensGanhos || 0}</p>
+              <p className="text-xs text-gray-400">Prêmios</p>
             </div>
-            <div className="text-xs text-gray-400">Ganho Total</div>
           </div>
-        </motion.div>
+        </div>
+      </motion.div>
 
-        {/* Conquistas */}
-        <motion.div
-          className="space-y-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-gold-primary" />
-            Conquistas
-          </h2>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {conquistas_mock.map((conquista) => (
-              <div
-                key={conquista.id}
+      {/* Tabs de Navegação */}
+      <div className="mb-6">
+        <div className="flex gap-2 bg-black/30 p-2 rounded-xl backdrop-blur-md border border-gray-700">
+          {[
+            { id: 'perfil', label: 'Perfil', icon: User },
+            { id: 'carteira', label: 'Carteira', icon: Wallet },
+            { id: 'itens', label: 'Itens', icon: Gift },
+            { id: 'historico', label: 'Histórico', icon: History }
+          ].map((tab) => {
+            const Icon = tab.icon
+            const isActive = activeTab === tab.id
+            
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
                 className={cn(
-                  "bg-dark-50 border rounded-xl p-4 flex items-center gap-3",
-                  conquista.conquistado
-                    ? "border-gold-primary/30 bg-gold-primary/5"
-                    : "border-gray-700"
+                  "flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all duration-200",
+                  isActive
+                    ? "bg-blue-600 text-white shadow-lg"
+                    : "text-gray-400 hover:text-white hover:bg-white/10"
                 )}
               >
-                <div className="w-8 h-8 flex items-center justify-center">
-                  <conquista.icone className={cn(
-                    "w-6 h-6",
-                    conquista.conquistado ? "text-gold-primary" : "text-gray-500"
-                  )} />
-                </div>
-                <div className="flex-1">
-                  <h3 className={cn(
-                    "font-semibold mb-1",
-                    conquista.conquistado ? "text-gold-primary" : "text-white"
-                  )}>
-                    {conquista.nome}
-                  </h3>
-                  <p className="text-xs text-gray-400">
-                    {conquista.descricao}
-                  </p>
-                </div>
-                {conquista.conquistado && (
-                  <Check className="w-5 h-5 text-gold-primary" />
-                )}
-              </div>
-            ))}
-          </div>
-        </motion.div>
+                <Icon className="w-4 h-4" />
+                <span className="text-sm">{tab.label}</span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
 
-        {/* Tabs */}
+      {/* Conteúdo das Abas */}
+      <AnimatePresence mode="wait">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
+          key={activeTab}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.3 }}
         >
-          <div className="flex border-b border-gray-700 mb-6">
-            {tabs.map((tab) => {
-              const Icon = tab.icon
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={cn(
-                    "flex items-center gap-2 py-3 px-4 text-sm font-medium transition-colors border-b-2 -mb-px",
-                    activeTab === tab.id
-                      ? "text-gold-primary border-gold-primary"
-                      : "text-gray-400 border-transparent hover:text-gray-300"
-                  )}
-                >
-                  <Icon className="w-4 h-4" />
-                  {tab.label}
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Tab Content */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {/* Tab: Meus Itens */}
-              {activeTab === 'itens' && (
+          {loading ? (
+            <ListLoadingSkeleton />
+          ) : (
+            <>
+              {/* Aba Perfil */}
+              {activeTab === 'perfil' && (
                 <div className="space-y-4">
-                  {itensLoading ? (
-                    <ListLoadingSkeleton type="item" count={4} />
-                  ) : itensGanhos?.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {itensGanhos.map((item) => (
-                        <CompactItemCard 
-                          key={`${item.id}-${item.timestamp}`} 
-                          item={item} 
-                        />
-                      ))}
+                  {/* Informações Pessoais */}
+                  <div className="bg-dark-50 border border-gray-700 rounded-xl p-6">
+                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                      <Settings className="w-5 h-5" />
+                      Informações Pessoais
+                    </h3>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm text-gray-400 mb-1 block">Nome</label>
+                        <p className="text-white font-medium">{usuario.nome}</p>
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm text-gray-400 mb-1 block">Telefone</label>
+                        <p className="text-white font-medium">{usuario.telefone}</p>
+                      </div>
+                      
+                      {usuario.email && (
+                        <div>
+                          <label className="text-sm text-gray-400 mb-1 block">Email</label>
+                          <p className="text-white font-medium">{usuario.email}</p>
+                        </div>
+                      )}
+                      
+                      <div>
+                        <label className="text-sm text-gray-400 mb-1 block">Membro desde</label>
+                        <p className="text-white font-medium">
+                          {usuario.criadoEm ? formatDate(usuario.criadoEm) : 'N/A'}
+                        </p>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <Gift className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                      <p className="text-gray-400">Você ainda não ganhou nenhum item</p>
+                  </div>
+
+                  {/* Progresso de Nível */}
+                  <div className="bg-dark-50 border border-gray-700 rounded-xl p-6">
+                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                      <Star className="w-5 h-5" />
+                      Progresso
+                    </h3>
+                    
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-300">Nível Atual</span>
+                        <span className="text-xl font-bold text-yellow-400">
+                          {nivelInfo.nivelAtual?.nivel} - {nivelInfo.nivelAtual?.titulo}
+                        </span>
+                      </div>
+                      
+                      <div>
+                        <div className="flex justify-between text-sm text-gray-400 mb-2">
+                          <span>Progresso para próximo nível</span>
+                          <span>{nivelInfo.progressoAtual}%</span>
+                        </div>
+                        <div className="bg-gray-700 rounded-full h-2">
+                          <div 
+                            className="bg-gradient-to-r from-yellow-500 to-orange-500 h-2 rounded-full transition-all duration-500"
+                            style={{ width: `${nivelInfo.progressoAtual}%` }}
+                          />
+                        </div>
+                        {nivelInfo.proximoNivel && (
+                          <p className="text-xs text-gray-400 mt-2">
+                            {nivelInfo.xpParaProximo} XP para {nivelInfo.proximoNivel.titulo}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
 
-              {/* Tab: Histórico */}
-              {activeTab === 'historico' && (
+              {/* Aba Carteira */}
+              {activeTab === 'carteira' && (
                 <div className="space-y-4">
-                  {historicoLoading ? (
-                    <ListLoadingSkeleton count={5} />
-                  ) : historico?.length > 0 ? (
-                    <div className="space-y-3">
-                      {historico.map((compra) => (
-                        <div
-                          key={compra.id}
-                          className="bg-black/20 backdrop-blur-gaming border border-white/10 rounded-xl p-4"
+                  {/* Resumo da Carteira */}
+                  <div className="bg-dark-50 border border-gray-700 rounded-xl p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                        <Wallet className="w-5 h-5" />
+                        Minha Carteira
+                      </h3>
+                      <div className="flex gap-2">
+                        <GamingButton
+                          variant="primary"
+                          size="sm"
+                          onClick={() => setShowDeposito(true)}
+                          icon={Plus}
+                          className="px-3"
                         >
-                          <div className="flex items-center justify-between mb-3">
+                          Depositar
+                        </GamingButton>
+                        <GamingButton
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowSaque(true)}
+                          icon={Minus}
+                          className="px-3"
+                          disabled={!usuario.verificado}
+                        >
+                          Sacar
+                        </GamingButton>
+                      </div>
+                    </div>
+                    
+                    {/* Saldo Atual Destaque */}
+                    <div className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 border border-blue-500/30 rounded-xl p-6 mb-6">
+                      <div className="text-center">
+                        <p className="text-sm text-gray-300 mb-2">Saldo Disponível</p>
+                        <p className="text-4xl font-bold text-white mb-2">
+                          {formatCurrency(saldoAtual || usuario.saldo || 0)}
+                        </p>
+                        <button 
+                          onClick={atualizarSaldo}
+                          className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 mx-auto transition-colors"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          Atualizar saldo
+                        </button>
+                      </div>
+                      
+                      {!usuario.verificado && (
+                        <div className="mt-4 pt-4 border-t border-blue-500/20">
+                          <p className="text-xs text-yellow-400 text-center flex items-center justify-center gap-1">
+                            <Crown className="w-3 h-3" />
+                            Verifique sua conta para saques
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
+                        <TrendingUp className="w-6 h-6 text-green-400 mb-2" />
+                        <p className="text-2xl font-bold text-green-400">
+                          {formatCurrency(usuario.totalGanho || 0)}
+                        </p>
+                        <p className="text-sm text-gray-300">Total Ganho</p>
+                      </div>
+                      
+                      <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
+                        <TrendingUp className="w-6 h-6 text-red-400 mb-2 rotate-180" />
+                        <p className="text-2xl font-bold text-red-400">
+                          {formatCurrency(usuario.totalGasto || 0)}
+                        </p>
+                        <p className="text-sm text-gray-300">Total Gasto</p>
+                      </div>
+                      
+                      <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+                        <Wallet className="w-6 h-6 text-blue-400 mb-2" />
+                        <p className="text-2xl font-bold text-blue-400">
+                          {formatCurrency(((usuario.totalGanho || 0) - (usuario.totalGasto || 0)))}
+                        </p>
+                        <p className="text-sm text-gray-300">Lucro/Prejuízo</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Histórico de Transações */}
+                  <div className="bg-dark-50 border border-gray-700 rounded-xl p-6">
+                    <h3 className="text-lg font-bold text-white mb-4">Histórico de Transações</h3>
+                    
+                    {historicoCarteira.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">Nenhuma transação encontrada</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {historicoCarteira.map((transacao, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-black/30 rounded-lg">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-gradient-gold rounded-xl flex items-center justify-center">
-                                <Package className="w-5 h-5 text-white" />
+                              <div className={cn(
+                                "p-2 rounded-lg",
+                                transacao.tipo === 'entrada' ? "bg-green-500/20" : "bg-red-500/20"
+                              )}>
+                                {transacao.tipo === 'entrada' ? (
+                                  <CreditCard className="w-4 h-4 text-green-400" />
+                                ) : (
+                                  <Package className="w-4 h-4 text-red-400" />
+                                )}
                               </div>
+                              
                               <div>
-                                <h3 className="font-semibold text-white">
-                                  {compra.caixaNome}
-                                </h3>
+                                <p className="text-white font-medium">{transacao.descricao}</p>
                                 <p className="text-xs text-gray-400">
-                                  {formatDate(compra.criadoEm)}
+                                  {formatDate(transacao.data)}
                                 </p>
                               </div>
                             </div>
                             
-                            <div className="text-right">
-                              <div className="text-sm font-semibold text-green-success">
-                                {formatCurrency(compra.valor)}
-                              </div>
-                              <div className="text-xs text-gray-400">
-                                Status: {compra.status}
-                              </div>
-                            </div>
+                            <p className={cn(
+                              "font-bold",
+                              transacao.tipo === 'entrada' ? "text-green-400" : "text-red-400"
+                            )}>
+                              {transacao.tipo === 'entrada' ? '+' : '-'}{formatCurrency(transacao.valor)}
+                            </p>
                           </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
-                          {compra.itemGanho && (
-                            <div className="bg-dark-100 rounded-lg p-3 mb-3">
-                              <div className="flex items-center gap-3">
-                                <img
-                                  src={compra.itemGanho.imagemUrl}
-                                  alt={compra.itemGanho.nome}
-                                  className="w-8 h-8 object-cover rounded-lg"
-                                />
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium text-white">
-                                    {compra.itemGanho.nome}
+              {/* Aba Itens */}
+              {activeTab === 'itens' && (
+                <div className="space-y-4">
+                  <div className="bg-dark-50 border border-gray-700 rounded-xl p-6">
+                    <h3 className="text-lg font-bold text-white mb-4">Seus Prêmios</h3>
+                    
+                    {itensGanhos.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">Nenhum item ganho ainda</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {itensGanhos.map((item, index) => (
+                          <CompactItemCard 
+                            key={`${item.id}-${index}`}
+                            item={item}
+                            showProbability={false}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Aba Histórico */}
+              {activeTab === 'historico' && (
+                <div className="space-y-4">
+                  <div className="bg-dark-50 border border-gray-700 rounded-xl p-6">
+                    <h3 className="text-lg font-bold text-white mb-4">Histórico de Compras</h3>
+                    
+                    {historico.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">Nenhuma compra realizada</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {historico.map((compra) => (
+                          <div key={compra.id} className="bg-black/30 rounded-lg p-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <div>
+                                <h4 className="text-white font-medium">{compra.caixa?.nome}</h4>
+                                <p className="text-sm text-gray-400">
+                                  {formatDate(compra.criadaEm)}
+                                </p>
+                              </div>
+                              
+                              <div className="text-right">
+                                <p className="text-red-400 font-bold">
+                                  -{formatCurrency(compra.valorPago)}
+                                </p>
+                                {compra.valorGanho > 0 && (
+                                  <p className="text-green-400 font-bold text-sm">
+                                    +{formatCurrency(compra.valorGanho)}
                                   </p>
-                                  <RaridadeBadge 
-                                    raridade={compra.itemGanho.raridade} 
-                                    size="sm" 
-                                  />
-                                </div>
-                                <div className="text-sm font-semibold text-green-success">
-                                  {formatCurrency(compra.itemGanho.valor)}
-                                </div>
+                                )}
                               </div>
                             </div>
-                          )}
-
-                          <div className="flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-2 text-gray-400">
-                              <span>ID: {compra.id.slice(0, 8)}...</span>
+                            
+                            {compra.itemGanho && (
+                              <div className="border-t border-gray-600 pt-3 mt-3">
+                                <div className="flex items-center gap-3">
+                                  <RaridadeBadge raridade={compra.itemGanho.raridade} size="sm" />
+                                  <span className="text-white font-medium">{compra.itemGanho.nome}</span>
+                                </div>
+                              </div>
+                            )}
+                            
+                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-700">
+                              <span className={cn(
+                                "text-xs px-2 py-1 rounded-full font-medium",
+                                compra.status === 'aberta' ? "bg-green-500/20 text-green-400" :
+                                compra.status === 'enviada' ? "bg-blue-500/20 text-blue-400" :
+                                compra.status === 'entregue' ? "bg-purple-500/20 text-purple-400" :
+                                "bg-gray-500/20 text-gray-400"
+                              )}>
+                                {compra.status === 'aberta' ? 'Aberta' :
+                                 compra.status === 'enviada' ? 'Enviada' :
+                                 compra.status === 'entregue' ? 'Entregue' :
+                                 'Criada'}
+                              </span>
+                              
                               <button
-                                onClick={() => handleCopyId(compra.id, 'ID da compra')}
-                                className="text-gray-500 hover:text-gray-300"
+                                onClick={() => handleCopyId(compra.id)}
+                                className="flex items-center gap-1 text-xs text-gray-400 hover:text-white transition-colors"
                               >
                                 {copiedId === compra.id ? (
                                   <Check className="w-3 h-3" />
                                 ) : (
                                   <Copy className="w-3 h-3" />
                                 )}
+                                ID: {compra.id.slice(0, 8)}...
                               </button>
                             </div>
-                            
-                            <button
-                              onClick={() => handleOpenTransparency(compra)}
-                              className="text-gold-primary hover:text-gold-secondary flex items-center gap-1"
-                            >
-                              <Eye className="w-3 h-3" />
-                              Ver Transparência
-                            </button>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <Calendar className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                      <p className="text-gray-400">Nenhuma compra realizada ainda</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Tab: Estatísticas */}
-              {activeTab === 'stats' && (
-                <div className="space-y-6">
-                  {loading ? (
-                    <LoadingSpinner size="lg" className="mx-auto" />
-                  ) : (
-                    <>
-                      {/* Estatísticas Gerais */}
-                      <div>
-                        <h3 className="text-base font-semibold text-white mb-4">
-                          Estatísticas Gerais
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="bg-black/20 backdrop-blur-gaming border border-white/10 rounded-xl p-4">
-                            <div className="text-2xl font-bold text-white mb-1">
-                              {formatCurrency(user.totalGasto || 0)}
-                            </div>
-                            <div className="text-sm text-gray-400">Total Investido</div>
-                          </div>
-                          
-                          <div className="bg-black/20 backdrop-blur-gaming border border-white/10 rounded-xl p-4">
-                            <div className="text-2xl font-bold text-green-success mb-1">
-                              {((user.totalGanho || 0) / Math.max(user.totalGasto || 1, 1) * 100).toFixed(1)}%
-                            </div>
-                            <div className="text-sm text-gray-400">Taxa de Retorno</div>
-                          </div>
-                        </div>
+                        ))}
                       </div>
-
-                      {/* Itens por Raridade */}
-                      {estatisticas.itensPorRaridade && (
-                        <div>
-                          <h3 className="text-base font-semibold text-white mb-4">
-                            Itens por Raridade
-                          </h3>
-                          <div className="space-y-3">
-                            {Object.entries(estatisticas.itensPorRaridade).map(([raridade, quantidade]) => (
-                              <div key={raridade} className="flex items-center justify-between bg-black/20 backdrop-blur-gaming border border-white/10 rounded-lg p-3">
-                                <RaridadeBadge raridade={raridade} />
-                                <span className="text-white font-semibold">{quantidade}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
+                    )}
+                  </div>
                 </div>
               )}
-            </motion.div>
-          </AnimatePresence>
+            </>
+          )}
         </motion.div>
-      </div>
+      </AnimatePresence>
 
-      {/* Transparency Modal */}
-      <TransparencyModal
-        isOpen={showTransparency}
-        onClose={() => setShowTransparency(false)}
-        caixaId={selectedCompra?.caixaId}
-        caixaNome={selectedCompra?.caixaNome}
-        compraId={selectedCompra?.id}
-      />
+      {/* Modal de Transparência */}
+      {showTransparency && selectedCompra && (
+        <TransparencyModal 
+          compra={selectedCompra}
+          onClose={() => setShowTransparency(false)}
+        />
+      )}
+
+      {/* Modal de Depósito PIX */}
+      <AnimatePresence>
+        {showDeposito && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div 
+            className="bg-dark-100 border border-gray-700 rounded-2xl w-full max-w-md"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  <Plus className="w-5 h-5" />
+                  Depositar via PIX
+                </h3>
+                <button 
+                  onClick={() => { setShowDeposito(false); setQrCodeData(null) }}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {!qrCodeData ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm text-gray-300 block mb-2">Valor do Depósito</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">R$</span>
+                      <input
+                        type="text"
+                        value={valorDeposito}
+                        onChange={(e) => setValorDeposito(e.target.value)}
+                        placeholder="0,00"
+                        className="w-full pl-10 pr-4 py-3 bg-white/10 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
+                        disabled={loadingPagamento}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">Mínimo: R$ 1,00 | Máximo: R$ 5.000,00</p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <GamingButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setValorDeposito('10')}
+                      className="flex-1"
+                    >
+                      R$ 10
+                    </GamingButton>
+                    <GamingButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setValorDeposito('50')}
+                      className="flex-1"
+                    >
+                      R$ 50
+                    </GamingButton>
+                    <GamingButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setValorDeposito('100')}
+                      className="flex-1"
+                    >
+                      R$ 100
+                    </GamingButton>
+                  </div>
+
+                  <GamingButton
+                    variant="primary"
+                    size="lg"
+                    onClick={handleDeposito}
+                    loading={loadingPagamento}
+                    disabled={loadingPagamento}
+                    icon={QrCode}
+                    className="w-full"
+                  >
+                    Gerar PIX
+                  </GamingButton>
+                </div>
+              ) : (
+                <div className="space-y-4 text-center">
+                  <div className="bg-white p-4 rounded-xl">
+                    <div className="text-6xl leading-none font-mono text-black break-all">
+                      {/* QR Code seria renderizado aqui */}
+                      QR CODE
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm text-gray-300 mb-2">PIX Copia e Cola</p>
+                    <div className="bg-dark-200 border border-gray-600 rounded-lg p-3 text-xs text-gray-300 font-mono break-all">
+                      {qrCodeData.copiaCola}
+                    </div>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(qrCodeData.copiaCola)}
+                      className="text-xs text-blue-400 hover:text-blue-300 mt-2 flex items-center gap-1 mx-auto transition-colors"
+                    >
+                      <Copy className="w-3 h-3" />
+                      Copiar código PIX
+                    </button>
+                  </div>
+
+                  <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
+                    <p className="text-yellow-400 text-sm font-medium mb-1">Valor: {formatCurrency(qrCodeData.valor)}</p>
+                    <p className="text-xs text-gray-300">PIX expira em 30 minutos</p>
+                  </div>
+
+                  <p className="text-xs text-gray-400">
+                    O saldo será adicionado automaticamente após confirmação do pagamento.
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Saque PIX */}
+      <AnimatePresence>
+        {showSaque && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div 
+            className="bg-dark-100 border border-gray-700 rounded-2xl w-full max-w-md"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  <Minus className="w-5 h-5" />
+                  Sacar via PIX
+                </h3>
+                <button 
+                  onClick={() => setShowSaque(false)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-gray-300 block mb-2">Valor do Saque</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">R$</span>
+                    <input
+                      type="text"
+                      value={valorSaque}
+                      onChange={(e) => setValorSaque(e.target.value)}
+                      placeholder="0,00"
+                      className="w-full pl-10 pr-4 py-3 bg-white/10 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
+                      disabled={loadingPagamento}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">Mínimo: R$ 10,00 | Disponível: {formatCurrency(saldoAtual || usuario.saldo || 0)}</p>
+                </div>
+
+                <div>
+                  <label className="text-sm text-gray-300 block mb-2">Tipo da Chave PIX</label>
+                  <select
+                    value={tipoChave}
+                    onChange={(e) => setTipoChave(e.target.value)}
+                    className="w-full p-3 bg-white/10 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-blue-500 transition-colors"
+                    disabled={loadingPagamento}
+                  >
+                    <option value="cpf">CPF</option>
+                    <option value="email">Email</option>
+                    <option value="telefone">Telefone</option>
+                    <option value="aleatoria">Chave Aleatória</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-sm text-gray-300 block mb-2">Chave PIX</label>
+                  <input
+                    type="text"
+                    value={pixChave}
+                    onChange={(e) => setPixChave(e.target.value)}
+                    placeholder={
+                      tipoChave === 'cpf' ? '000.000.000-00' :
+                      tipoChave === 'email' ? 'seu@email.com' :
+                      tipoChave === 'telefone' ? '(11) 99999-9999' :
+                      'chave-aleatoria-uuid'
+                    }
+                    className="w-full p-3 bg-white/10 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
+                    disabled={loadingPagamento}
+                  />
+                </div>
+
+                {!usuario.verificado && (
+                  <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
+                    <p className="text-yellow-400 text-sm font-medium flex items-center gap-2">
+                      <Crown className="w-4 h-4" />
+                      Conta não verificada
+                    </p>
+                    <p className="text-xs text-gray-300 mt-1">
+                      Para realizar saques, você precisa verificar sua conta primeiro.
+                    </p>
+                  </div>
+                )}
+
+                <GamingButton
+                  variant="primary"
+                  size="lg"
+                  onClick={handleSaque}
+                  loading={loadingPagamento}
+                  disabled={loadingPagamento || !usuario.verificado}
+                  icon={Download}
+                  className="w-full"
+                >
+                  Solicitar Saque
+                </GamingButton>
+
+                <p className="text-xs text-gray-400 text-center">
+                  Saques são processados em até 2 dias úteis.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+        )}
+      </AnimatePresence>
+      </div>
     </div>
   )
 }

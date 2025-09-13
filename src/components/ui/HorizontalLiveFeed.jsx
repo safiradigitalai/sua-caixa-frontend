@@ -47,8 +47,8 @@ const HorizontalLiveFeed = () => {
     return () => clearInterval(interval)
   }, [isMobile])
 
-  // Duplicar array para loop infinito no desktop
-  const infiniteWins = [...mockWins, ...mockWins, ...mockWins]
+  // Duplicar array para loop infinito no desktop (otimizado: 2x em vez de 3x)
+  const infiniteWins = [...mockWins, ...mockWins]
 
   const rarityStyles = {
     legendary: {
@@ -77,18 +77,18 @@ const HorizontalLiveFeed = () => {
     const Icon = win.icon
 
     return (
-      <motion.div
+      <div
         className={`
           ${style.bg} backdrop-blur-sm shadow-lg ${style.glow}
           flex items-center gap-2 md:gap-3 px-2 md:px-4 py-2 
           w-full md:min-w-[280px] md:w-auto
-          hover:scale-[1.02] transition-all cursor-pointer
+          hover:scale-[1.02] transition-transform duration-200 cursor-pointer
           relative overflow-hidden
         `}
-        whileHover={{ scale: 1.02 }}
-        initial={{ opacity: 0, y: 5 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.05 }}
+        style={{ 
+          willChange: 'transform',
+          backfaceVisibility: 'hidden'
+        }}
       >
         {/* Gaming Corner Accent */}
         <div className="absolute top-1 right-1 w-2 h-2 opacity-40">
@@ -124,7 +124,7 @@ const HorizontalLiveFeed = () => {
         <div className={`w-6 h-6 ${style.bg} flex items-center justify-center flex-shrink-0`}>
           <Icon className={`w-3 h-3 ${style.text}`} />
         </div>
-      </motion.div>
+      </div>
     )
   }
 
@@ -160,7 +160,14 @@ const HorizontalLiveFeed = () => {
         delay: 0.5
       }}
     >
-      <div className="relative overflow-hidden bg-black/40 backdrop-blur-xl shadow-lg">
+      <div 
+        className="relative overflow-hidden bg-black/40 backdrop-blur-xl shadow-lg"
+        style={{
+          willChange: 'auto',
+          transform: 'translate3d(0, 0, 0)',
+          backfaceVisibility: 'hidden'
+        }}
+      >
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div 
@@ -214,9 +221,14 @@ const HorizontalLiveFeed = () => {
                 className="flex items-center"
                 animate={{ x: ['0%', '-50%'] }}
                 transition={{
-                  duration: 50,
+                  duration: 30,
                   repeat: Infinity,
                   ease: "linear"
+                }}
+                style={{ 
+                  willChange: 'transform',
+                  transform3d: 'translate3d(0, 0, 0)',
+                  backfaceVisibility: 'hidden'
                 }}
               >
                 {infiniteWins.map((win, index) => (

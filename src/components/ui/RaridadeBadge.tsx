@@ -1,6 +1,15 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { getRaridadeInfo, cn } from '../../lib/utils'
+import type { Raridade } from '../../types'
+
+interface RaridadeBadgeProps {
+  raridade: Raridade
+  size?: 'sm' | 'md' | 'lg'
+  showIcon?: boolean
+  animated?: boolean
+  className?: string
+}
 
 const RaridadeBadge = ({ 
   raridade, 
@@ -8,18 +17,18 @@ const RaridadeBadge = ({
   showIcon = true, 
   animated = false,
   className = '' 
-}) => {
+}: RaridadeBadgeProps) => {
   if (!raridade) return null
 
   const info = getRaridadeInfo(raridade)
   
-  const sizeClasses = {
+  const sizeClasses: Record<NonNullable<RaridadeBadgeProps['size']>, string> = {
     sm: 'px-2 py-1 text-xs',
     md: 'px-3 py-1.5 text-sm',
     lg: 'px-4 py-2 text-base'
   }
 
-  const iconSizes = {
+  const iconSizes: Record<NonNullable<RaridadeBadgeProps['size']>, string> = {
     sm: 'text-xs',
     md: 'text-sm', 
     lg: 'text-base'
@@ -65,7 +74,12 @@ const RaridadeBadge = ({
 }
 
 // Componente especializado para hover tooltip
-export const RaridadeTooltip = ({ raridade, children }) => {
+interface RaridadeTooltipProps {
+  raridade: Raridade
+  children: React.ReactNode
+}
+
+export const RaridadeTooltip = ({ raridade, children }: RaridadeTooltipProps) => {
   const info = getRaridadeInfo(raridade)
   
   return (
@@ -97,7 +111,11 @@ export const RaridadeTooltip = ({ raridade, children }) => {
 }
 
 // Badge com animação de brilho para itens lendários
-export const LegendaryBadge = ({ raridade, ...props }) => {
+interface LegendaryBadgeProps extends Omit<RaridadeBadgeProps, 'raridade'> {
+  raridade: Raridade
+}
+
+export const LegendaryBadge = ({ raridade, ...props }: LegendaryBadgeProps) => {
   const isLegendary = raridade === 'lendario'
   
   if (!isLegendary) {

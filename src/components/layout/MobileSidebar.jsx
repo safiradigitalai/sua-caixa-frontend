@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Home, Package, TrendingUp, Trophy, User, LogIn, LogOut, Settings, HelpCircle, Shield } from 'lucide-react'
 
@@ -8,6 +8,7 @@ import { useUI, useUser } from '../../stores/useAppStore'
 import { triggerHaptic, cn } from '../../lib/utils'
 
 const MobileSidebar = () => {
+  const navigate = useNavigate()
   const { sidebarOpen, closeSidebar } = useUI()
   const { isAuthenticated, user, logout } = useUser()
 
@@ -20,6 +21,9 @@ const MobileSidebar = () => {
     triggerHaptic('medium')
     logout()
     closeSidebar()
+    
+    // Redirecionar imediatamente para login
+    navigate('/login')
   }
 
   const mainMenuItems = [

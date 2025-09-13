@@ -5,19 +5,20 @@ import { Download, X, Smartphone } from 'lucide-react'
 // Hooks
 import { usePWA } from '../../stores/useAppStore'
 import { isPWA, isIOS, triggerHaptic, storage } from '../../lib/utils'
+import type { BeforeInstallPromptEvent } from '../../types'
 
-const PWAInstallBanner = () => {
+const PWAInstallBanner: React.FC = () => {
   const { showInstallPrompt, setInstallPrompt } = usePWA()
-  const [deferredPrompt, setDeferredPrompt] = useState(null)
-  const [showBanner, setShowBanner] = useState(false)
-  const [showIOSInstructions, setShowIOSInstructions] = useState(false)
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
+  const [showBanner, setShowBanner] = useState<boolean>(false)
+  const [showIOSInstructions, setShowIOSInstructions] = useState<boolean>(false)
 
   useEffect(() => {
     // Não mostrar se já está instalado
     if (isPWA()) return
 
     // Não mostrar se usuário já dispensou recentemente
-    const dismissed = storage.get('pwa-install-dismissed')
+    const dismissed = storage.get<string>('pwa-install-dismissed')
     const dismissedDate = dismissed ? new Date(dismissed) : null
     const daysSinceDismissed = dismissedDate 
       ? (Date.now() - dismissedDate.getTime()) / (1000 * 60 * 60 * 24)
@@ -31,9 +32,9 @@ const PWAInstallBanner = () => {
     }
 
     // Listener para capturar o prompt
-    const handleBeforeInstallPrompt = (e) => {
+    const handleBeforeInstallPrompt = (e: Event): void => {
       e.preventDefault()
-      setDeferredPrompt(e)
+      setDeferredPrompt(e as BeforeInstallPromptEvent)
       setShowBanner(true)
     }
 
@@ -44,7 +45,7 @@ const PWAInstallBanner = () => {
     }
   }, [showInstallPrompt])
 
-  const handleInstall = async () => {
+  const handleInstall = async (): Promise<void> => {
     triggerHaptic('medium')
 
     if (isIOS()) {
@@ -56,7 +57,7 @@ const PWAInstallBanner = () => {
     if (deferredPrompt) {
       try {
         // Mostrar prompt nativo
-        deferredPrompt.prompt()
+        await deferredPrompt.prompt()
         
         const { outcome } = await deferredPrompt.userChoice
         
@@ -73,7 +74,7 @@ const PWAInstallBanner = () => {
     }
   }
 
-  const handleDismiss = () => {
+  const handleDismiss = (): void => {
     triggerHaptic('light')
     setShowBanner(false)
     setInstallPrompt(false)
@@ -82,7 +83,7 @@ const PWAInstallBanner = () => {
     storage.set('pwa-install-dismissed', new Date().toISOString())
   }
 
-  const handleIOSInstructionsClose = () => {
+  const handleIOSInstructionsClose = (): void => {
     setShowIOSInstructions(false)
     handleDismiss()
   }
@@ -123,6 +124,7 @@ const PWAInstallBanner = () => {
                   <button
                     onClick={handleInstall}
                     className="btn-primary px-4 py-2 text-sm"
+                    type="button"
                   >
                     <Download className="w-4 h-4" />
                     <span>Instalar</span>
@@ -131,6 +133,7 @@ const PWAInstallBanner = () => {
                   <button
                     onClick={handleDismiss}
                     className="btn-ghost p-2"
+                    type="button"
                     aria-label="Fechar"
                   >
                     <X className="w-4 h-4 text-gray-400" />
@@ -207,6 +210,7 @@ const PWAInstallBanner = () => {
               <button
                 onClick={handleIOSInstructionsClose}
                 className="btn-primary w-full"
+                type="button"
               >
                 Entendi
               </button>

@@ -1,13 +1,43 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { ArrowRight, Loader2 } from 'lucide-react'
+import { ArrowRight, Loader2, LucideIcon } from 'lucide-react'
 
 /**
  * GamingButton - Sistema de botões com DNA dos Gaming Banners
  * Mantém a consistência visual e interativa
  */
 
-const GamingButton = ({ 
+// Types
+type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'success' | 'danger' | 'ghost' | 'outline'
+type ButtonSize = 'sm' | 'default' | 'lg' | 'xl'
+type IconPosition = 'left' | 'right'
+
+interface VariantStyle {
+  bg: string
+  text: string
+  border: string
+  glow: string
+  particles: string
+}
+
+interface GamingButtonProps {
+  variant?: ButtonVariant
+  size?: ButtonSize
+  children: React.ReactNode
+  icon?: LucideIcon
+  iconPosition?: IconPosition
+  loading?: boolean
+  disabled?: boolean
+  animated?: boolean
+  glowEffect?: boolean
+  arrowAnimation?: boolean
+  onClick?: () => void
+  href?: string
+  className?: string
+  [key: string]: any // Para spread props
+}
+
+const GamingButton: React.FC<GamingButtonProps> = ({ 
   variant = 'primary',
   size = 'default',
   children,
@@ -25,7 +55,7 @@ const GamingButton = ({
 }) => {
   
   // Sistema de variantes baseado nos Gaming Banners
-  const variants = {
+  const variants: Record<ButtonVariant, VariantStyle> = {
     primary: {
       bg: 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500',
       text: 'text-white',
@@ -77,7 +107,7 @@ const GamingButton = ({
     }
   }
 
-  const sizes = {
+  const sizes: Record<ButtonSize, string> = {
     sm: 'px-4 py-2 text-sm min-h-[36px]',
     default: 'px-6 py-3 text-base min-h-[44px]',
     lg: 'px-8 py-4 text-lg min-h-[52px]',
@@ -88,7 +118,7 @@ const GamingButton = ({
   const sizeClass = sizes[size]
   
   const ButtonComponent = href ? motion.a : motion.button
-  const buttonProps = href ? { href, target: "_blank", rel: "noopener noreferrer" } : {}
+  const buttonProps: any = href ? { href, target: "_blank", rel: "noopener noreferrer" } : {}
   
   if (onClick) {
     buttonProps.onClick = onClick

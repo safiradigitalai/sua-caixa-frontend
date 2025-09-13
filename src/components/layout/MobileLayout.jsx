@@ -20,8 +20,8 @@ const MobileLayout = ({ children }) => {
     location.pathname.startsWith(path)
   )
 
-  // Páginas com header customizado
-  const customHeaderPages = ['/']
+  // Páginas com header customizado (sem MobileHeader)
+  const customHeaderPages = ['/', '/login', '/perfil']
   
   // Home page precisa de mais espaçamento
   const isHomePage = location.pathname === '/'

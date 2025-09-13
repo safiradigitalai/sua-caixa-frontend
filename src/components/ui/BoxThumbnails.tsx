@@ -4,7 +4,31 @@ import { cn } from '../../lib/utils'
 // Sistema de thumbnails padrão para caixas baseado em preço/raridade
 // Cada thumbnail tem um design único e temático
 
-const BaseThumbnail = ({ children, className = "", variant = "default" }) => (
+// Types e Interfaces
+type ThumbnailVariant = 'default' | 'pink' | 'lime' | 'cyan' | 'gold' | 'purple'
+
+interface BaseThumbnailProps {
+  children: React.ReactNode
+  className?: string
+  variant?: ThumbnailVariant
+}
+
+interface ThumbnailProps {
+  nome: string
+  preco: string
+  className?: string
+}
+
+interface SmartBoxThumbnailProps {
+  nome: string
+  preco: string
+  imagemUrl?: string
+  className?: string
+}
+
+type ThumbnailComponent = React.FC<ThumbnailProps>
+
+const BaseThumbnail: React.FC<BaseThumbnailProps> = ({ children, className = "", variant = "default" }) => (
   <div className={cn(
     "w-full h-full relative overflow-hidden flex items-center justify-center",
     "bg-gradient-to-br from-gray-800 to-gray-900",
@@ -34,7 +58,7 @@ const BaseThumbnail = ({ children, className = "", variant = "default" }) => (
 )
 
 // Thumbnail para caixas comuns (R$ 5-25)
-export const CommonBoxThumbnail = ({ nome, preco, className = "" }) => (
+export const CommonBoxThumbnail: React.FC<ThumbnailProps> = ({ nome, preco, className = "" }) => (
   <BaseThumbnail variant="default" className={className}>
     {/* Simple Box Icon */}
     <svg viewBox="0 0 64 64" className="w-16 h-16 text-gray-300 mb-2">
@@ -51,7 +75,7 @@ export const CommonBoxThumbnail = ({ nome, preco, className = "" }) => (
 )
 
 // Thumbnail para caixas raras (R$ 25-50)
-export const RareBoxThumbnail = ({ nome, preco, className = "" }) => (
+export const RareBoxThumbnail: React.FC<ThumbnailProps> = ({ nome, preco, className = "" }) => (
   <BaseThumbnail variant="cyan" className={className}>
     {/* Treasure Chest */}
     <svg viewBox="0 0 64 64" className="w-16 h-16 text-cyan-300 mb-2">
@@ -77,7 +101,7 @@ export const RareBoxThumbnail = ({ nome, preco, className = "" }) => (
 )
 
 // Thumbnail para caixas épicas (R$ 50-100)
-export const EpicBoxThumbnail = ({ nome, preco, className = "" }) => (
+export const EpicBoxThumbnail: React.FC<ThumbnailProps> = ({ nome, preco, className = "" }) => (
   <BaseThumbnail variant="purple" className={className}>
     {/* Magic Crystal Box */}
     <svg viewBox="0 0 64 64" className="w-16 h-16 text-purple-300 mb-2">
@@ -104,7 +128,7 @@ export const EpicBoxThumbnail = ({ nome, preco, className = "" }) => (
 )
 
 // Thumbnail para caixas lendárias (R$ 100-200)
-export const LegendaryBoxThumbnail = ({ nome, preco, className = "" }) => (
+export const LegendaryBoxThumbnail: React.FC<ThumbnailProps> = ({ nome, preco, className = "" }) => (
   <BaseThumbnail variant="gold" className={className}>
     {/* Golden Vault */}
     <svg viewBox="0 0 64 64" className="w-16 h-16 text-yellow-300 mb-2">
@@ -138,7 +162,7 @@ export const LegendaryBoxThumbnail = ({ nome, preco, className = "" }) => (
 )
 
 // Thumbnail para caixas míticas (R$ 200+)
-export const MythicBoxThumbnail = ({ nome, preco, className = "" }) => (
+export const MythicBoxThumbnail: React.FC<ThumbnailProps> = ({ nome, preco, className = "" }) => (
   <BaseThumbnail variant="pink" className={className}>
     {/* Cosmic Diamond */}
     <svg viewBox="0 0 64 64" className="w-16 h-16 text-pink-300 mb-2">
@@ -175,7 +199,7 @@ export const MythicBoxThumbnail = ({ nome, preco, className = "" }) => (
 )
 
 // Thumbnail genérico para fallback
-export const DefaultBoxThumbnail = ({ nome, preco, className = "" }) => (
+export const DefaultBoxThumbnail: React.FC<ThumbnailProps> = ({ nome, preco, className = "" }) => (
   <BaseThumbnail className={className}>
     {/* Mystery Question Mark */}
     <svg viewBox="0 0 64 64" className="w-16 h-16 text-gray-300 mb-2">
@@ -201,7 +225,7 @@ export const DefaultBoxThumbnail = ({ nome, preco, className = "" }) => (
 )
 
 // Função para selecionar o thumbnail baseado no preço
-export const getThumbnailByPrice = (preco) => {
+export const getThumbnailByPrice = (preco: string): ThumbnailComponent => {
   const price = parseFloat(preco) || 0
   
   if (price >= 200) return MythicBoxThumbnail
@@ -212,7 +236,7 @@ export const getThumbnailByPrice = (preco) => {
 }
 
 // Componente principal que sempre usa thumbnails padrão (sem imagens)
-export const SmartBoxThumbnail = ({ nome, preco, imagemUrl, className = "" }) => {
+export const SmartBoxThumbnail: React.FC<SmartBoxThumbnailProps> = ({ nome, preco, imagemUrl, className = "" }) => {
   // Seleciona thumbnail baseado no preço - sempre ignora imagemUrl
   const ThumbnailComponent = getThumbnailByPrice(preco)
   

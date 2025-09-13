@@ -63,26 +63,34 @@ const GamingCaseCard = ({
 
   return (
     <motion.div
-      className={`relative group perspective-1000 ${className}`}
+      className={`relative group ${className}`}
       initial={animated ? { opacity: 0, y: 20 } : {}}
       animate={animated ? { opacity: 1, y: 0 } : {}}
       whileHover={animated ? { 
-        scale: 1.02,
-        rotateX: 2,
-        rotateY: 2
+        scale: 1.02
       } : {}}
       transition={{ 
         type: "spring", 
         stiffness: 400, 
         damping: 25
       }}
+      style={{
+        willChange: 'transform',
+        backfaceVisibility: 'hidden'
+      }}
     >
-      <div className={`
-        relative overflow-hidden rounded-3xl
-        ${style.gradient} ${style.border} ${style.glow}
-        border-2 transition-all duration-300
-        bg-black/20 backdrop-blur-sm
-      `}>
+      <div 
+        className={`
+          relative overflow-hidden rounded-3xl
+          ${style.gradient} ${style.border} ${style.glow}
+          border-2 transition-transform duration-300
+          bg-black/20
+        `}
+        style={{
+          willChange: 'transform',
+          backfaceVisibility: 'hidden'
+        }}
+      >
         
         {/* Background Pattern Gaming */}
         <div className="absolute inset-0 opacity-10 pointer-events-none">
@@ -142,9 +150,9 @@ const GamingCaseCard = ({
             </motion.div>
           </div>
 
-          {/* Gaming Particles on Hover */}
+          {/* Gaming Particles on Hover - Otimizado */}
           <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none">
-            {[...Array(6)].map((_, i) => (
+            {[...Array(3)].map((_, i) => (
               <motion.div
                 key={i}
                 className="absolute w-1.5 h-1.5 rounded-full"
@@ -154,14 +162,13 @@ const GamingCaseCard = ({
                   top: `${Math.random() * 100}%`,
                 }}
                 animate={animated ? {
-                  scale: [1, 1.5, 1],
-                  opacity: [0.4, 1, 0.4],
-                  rotate: [0, 180, 360],
+                  scale: [1, 1.2, 1],
+                  opacity: [0.4, 0.8, 0.4],
                 } : {}}
                 transition={{
-                  duration: 2 + Math.random() * 1,
+                  duration: 3,
                   repeat: Infinity,
-                  delay: Math.random() * 2,
+                  delay: i * 0.5,
                 }}
               />
             ))}
@@ -238,26 +245,25 @@ const GamingCaseCard = ({
           <div className="w-full h-full border-2 border-white/40 border-r-0 border-t-0 rounded-bl-xl" />
         </div>
 
-        {/* Floating Stars on Hover */}
+        {/* Floating Stars on Hover - Otimizado */}
         {animated && (
           <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            {[...Array(3)].map((_, i) => (
+            {[...Array(2)].map((_, i) => (
               <motion.div
                 key={i}
                 className="absolute"
                 style={{
-                  left: `${20 + i * 30}%`,
-                  top: `${10 + i * 15}%`,
+                  left: `${30 + i * 40}%`,
+                  top: `${15 + i * 20}%`,
                 }}
                 animate={{
-                  y: [-3, -8, -3],
-                  rotate: [0, 180, 360],
-                  scale: [0.8, 1, 0.8],
+                  y: [-2, -5, -2],
+                  scale: [0.9, 1, 0.9],
                 }}
                 transition={{
-                  duration: 1.5,
+                  duration: 2,
                   repeat: Infinity,
-                  delay: i * 0.2,
+                  delay: i * 0.3,
                 }}
               >
                 <Star className="w-2 h-2 text-yellow-300 drop-shadow-lg" />

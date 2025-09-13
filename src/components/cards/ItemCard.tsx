@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { motion } from 'framer-motion'
 import { Package, Zap, Info } from 'lucide-react'
 
@@ -8,8 +8,23 @@ import { SmartItemThumbnail } from '../ui/ItemThumbnails'
 
 // Utils
 import { formatCurrency, formatProbability, getTipoInfo, cn } from '../../lib/utils'
+import type { Item } from '../../types'
 
-const ItemCard = ({ 
+// Interface para as props do ItemCard
+interface ItemCardProps {
+  item: Item & {
+    probabilidade?: number
+    chancesExibir?: string
+    vezesGanho?: number
+  }
+  showProbability?: boolean
+  showStats?: boolean
+  interactive?: boolean
+  compact?: boolean
+  className?: string
+}
+
+const ItemCard: React.FC<ItemCardProps> = ({ 
   item, 
   showProbability = true, 
   showStats = false, 
@@ -176,12 +191,16 @@ const ItemCard = ({
 }
 
 // Versão compacta para listas
-export const CompactItemCard = (props) => (
+interface CompactItemCardProps extends Omit<ItemCardProps, 'compact' | 'showStats'> {}
+
+export const CompactItemCard: React.FC<CompactItemCardProps> = (props) => (
   <ItemCard {...props} compact={true} showStats={false} />
 )
 
 // Versão para transparência com todos os detalhes
-export const TransparencyItemCard = (props) => (
+interface TransparencyItemCardProps extends Omit<ItemCardProps, 'showProbability' | 'showStats' | 'interactive'> {}
+
+export const TransparencyItemCard: React.FC<TransparencyItemCardProps> = (props) => (
   <ItemCard {...props} showProbability={true} showStats={true} interactive={false} />
 )
 

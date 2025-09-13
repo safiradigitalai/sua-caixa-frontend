@@ -1,17 +1,66 @@
-import { clsx } from 'clsx'
+import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+
+// ==============================================
+// TIPOS E INTERFACES
+// ==============================================
+
+export type Raridade = 'comum' | 'raro' | 'epico' | 'lendario' | 'mitico'
+
+export type TipoItem = 'fisico' | 'digital' | 'credito'
+
+export type HapticType = 'light' | 'medium' | 'heavy' | 'success' | 'error' | 'notification' | 'impact' | 'selection' | 'tick' | 'double'
+
+export type ToastType = 'success' | 'error' | 'warning' | 'info'
+
+export type ToastPosition = 'top' | 'bottom'
+
+export interface ToastOptions {
+  type?: ToastType
+  duration?: number
+  position?: ToastPosition
+  haptic?: boolean
+  emoji?: string | null
+}
+
+export interface RaridadeInfo {
+  label: string
+  color: string
+  emoji: string
+  bgColor: string
+  textColor: string
+  borderColor: string
+}
+
+export interface TipoInfo {
+  label: string
+  icon: string
+  description: string
+  entregaImediata: boolean
+}
+
+export interface StorageInterface {
+  get<T = any>(key: string, defaultValue?: T): T
+  set(key: string, value: any): boolean
+  remove(key: string): boolean
+  clear(): boolean
+}
+
+// ==============================================
+// UTILITIES
+// ==============================================
 
 /**
  * Utility para combinar classes Tailwind de forma inteligente
  */
-export function cn(...inputs) {
+export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs))
 }
 
 /**
  * Formatar valores em reais brasileiro
  */
-export function formatCurrency(value) {
+export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
@@ -23,7 +72,7 @@ export function formatCurrency(value) {
 /**
  * Formatar números grandes de forma compacta
  */
-export function formatCompactNumber(value) {
+export function formatCompactNumber(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
     notation: 'compact',
     compactDisplay: 'short',
@@ -33,10 +82,10 @@ export function formatCompactNumber(value) {
 /**
  * Formatar tempo relativo (ex: "há 2 minutos")
  */
-export function formatRelativeTime(date) {
+export function formatRelativeTime(date: string | Date): string {
   const now = new Date()
   const target = new Date(date)
-  const diffInSeconds = Math.floor((now - target) / 1000)
+  const diffInSeconds = Math.floor((now.getTime() - target.getTime()) / 1000)
 
   if (diffInSeconds < 60) {
     return 'agora mesmo'
@@ -72,7 +121,7 @@ export const formatTime = formatRelativeTime
 /**
  * Formatar data completa
  */
-export function formatDate(date) {
+export function formatDate(date: string | Date): string {
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: '2-digit', 
@@ -85,14 +134,14 @@ export function formatDate(date) {
 /**
  * Formatar porcentagem
  */
-export function formatPercentage(value) {
+export function formatPercentage(value: number): string {
   return `${value.toFixed(1)}%`
 }
 
 /**
  * Get rarity level from price (usado no BoxCard)
  */
-export function getRarityLevel(preco) {
+export function getRarityLevel(preco: number): Raridade {
   if (preco >= 100) return 'lendario'
   if (preco >= 50) return 'epico' 
   if (preco >= 25) return 'raro'
@@ -102,7 +151,7 @@ export function getRarityLevel(preco) {
 /**
  * Enhanced sound system with fallback
  */
-export function playSound(src, volume = 1) {
+export function playSound(src: string, volume: number = 1): HTMLAudioElement | null {
   try {
     // Check if audio context is available
     if (typeof window !== 'undefined' && 'Audio' in window) {
@@ -126,7 +175,7 @@ export function playSound(src, volume = 1) {
       return audio
     }
   } catch (error) {
-    console.log(`🔊 Error playing sound ${src}:`, error.message)
+    console.log(`🔊 Error playing sound ${src}:`, error instanceof Error ? error.message : 'Unknown error')
   }
   
   // Fallback: console log for demo
@@ -137,8 +186,8 @@ export function playSound(src, volume = 1) {
 /**
  * Play rarity-specific sound with enhanced feedback
  */
-export function playRaritySound(raridade, volume = 0.5) {
-  const soundMap = {
+export function playRaritySound(raridade: Raridade, volume: number = 0.5): HTMLAudioElement | null {
+  const soundMap: Record<Raridade, string> = {
     comum: '/sounds/reveal-comum.mp3',
     raro: '/sounds/reveal-raro.mp3',
     epico: '/sounds/reveal-epico.mp3',
@@ -153,7 +202,7 @@ export function playRaritySound(raridade, volume = 0.5) {
 /**
  * Formatar probabilidade para exibição (ex: "1 em 1000")
  */
-export function formatProbability(probability) {
+export function formatProbability(probability: number): string {
   if (probability >= 0.01) {
     return `${(probability * 100).toFixed(1)}%`
   }
@@ -165,8 +214,8 @@ export function formatProbability(probability) {
 /**
  * Obter informações da raridade
  */
-export function getRaridadeInfo(raridade) {
-  const raridades = {
+export function getRaridadeInfo(raridade: Raridade): RaridadeInfo {
+  const raridades: Record<Raridade, RaridadeInfo> = {
     comum: {
       label: 'Comum',
       color: '#10B981',
@@ -199,6 +248,14 @@ export function getRaridadeInfo(raridade) {
       textColor: 'text-gold-primary',
       borderColor: 'border-gold-primary/30',
     },
+    mitico: {
+      label: 'Mítico',
+      color: '#DC2626',
+      emoji: '🔥',
+      bgColor: 'bg-red-500/20',
+      textColor: 'text-red-400',
+      borderColor: 'border-red-500/30',
+    },
   }
 
   return raridades[raridade] || raridades.comum
@@ -207,8 +264,8 @@ export function getRaridadeInfo(raridade) {
 /**
  * Obter informações do tipo de item
  */
-export function getTipoInfo(tipo) {
-  const tipos = {
+export function getTipoInfo(tipo: TipoItem): TipoInfo {
+  const tipos: Record<TipoItem, TipoInfo> = {
     fisico: {
       label: 'Produto Físico',
       icon: '📦',
@@ -235,7 +292,7 @@ export function getTipoInfo(tipo) {
 /**
  * Validar CPF
  */
-export function validateCPF(cpf) {
+export function validateCPF(cpf: string): boolean {
   const cleaned = cpf.replace(/\D/g, '')
   
   if (cleaned.length !== 11) return false
@@ -263,7 +320,7 @@ export function validateCPF(cpf) {
 /**
  * Formatar CPF
  */
-export function formatCPF(cpf) {
+export function formatCPF(cpf: string): string {
   const cleaned = cpf.replace(/\D/g, '')
   return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
 }
@@ -271,7 +328,7 @@ export function formatCPF(cpf) {
 /**
  * Validar telefone brasileiro
  */
-export function validatePhone(phone) {
+export function validatePhone(phone: string): boolean {
   const cleaned = phone.replace(/\D/g, '')
   return cleaned.length === 10 || cleaned.length === 11
 }
@@ -279,7 +336,7 @@ export function validatePhone(phone) {
 /**
  * Formatar telefone
  */
-export function formatPhone(phone) {
+export function formatPhone(phone: string): string {
   const cleaned = phone.replace(/\D/g, '')
   if (cleaned.length === 11) {
     return cleaned.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
@@ -293,9 +350,12 @@ export function formatPhone(phone) {
 /**
  * Debounce function
  */
-export function debounce(func, wait) {
-  let timeout
-  return function executedFunction(...args) {
+export function debounce<T extends (...args: any[]) => any>(
+  func: T, 
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | undefined
+  return function executedFunction(...args: Parameters<T>) {
     const later = () => {
       clearTimeout(timeout)
       func(...args)
@@ -308,9 +368,12 @@ export function debounce(func, wait) {
 /**
  * Throttle function
  */
-export function throttle(func, limit) {
-  let inThrottle
-  return function executedFunction(...args) {
+export function throttle<T extends (...args: any[]) => any>(
+  func: T, 
+  limit: number
+): (...args: Parameters<T>) => void {
+  let inThrottle: boolean
+  return function executedFunction(this: any, ...args: Parameters<T>) {
     if (!inThrottle) {
       func.apply(this, args)
       inThrottle = true
@@ -322,14 +385,14 @@ export function throttle(func, limit) {
 /**
  * Gerar ID único
  */
-export function generateId() {
+export function generateId(): string {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
 }
 
 /**
  * Copiar texto para clipboard
  */
-export async function copyToClipboard(text) {
+export async function copyToClipboard(text: string): Promise<boolean> {
   if (navigator.clipboard) {
     try {
       await navigator.clipboard.writeText(text)
@@ -360,32 +423,32 @@ export async function copyToClipboard(text) {
 /**
  * Detectar se está rodando em PWA
  */
-export function isPWA() {
+export function isPWA(): boolean {
   return window.matchMedia('(display-mode: standalone)').matches || 
-         window.navigator.standalone === true
+         (window.navigator as any).standalone === true
 }
 
 /**
  * Detectar se é mobile
  */
-export function isMobile() {
+export function isMobile(): boolean {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 }
 
 /**
  * Detectar se é iOS
  */
-export function isIOS() {
+export function isIOS(): boolean {
   return /iPad|iPhone|iPod/.test(navigator.userAgent)
 }
 
 /**
  * Enhanced haptic feedback system - Brazilian mobile-first
  */
-export function triggerHaptic(type = 'light') {
+export function triggerHaptic(type: HapticType = 'light'): void {
   // Native haptic API (newer browsers)
   if (navigator.vibrate) {
-    const patterns = {
+    const patterns: Record<HapticType, number[]> = {
       light: [10],
       medium: [20],
       heavy: [30],
@@ -403,8 +466,8 @@ export function triggerHaptic(type = 'light') {
   }
   
   // Fallback for legacy systems
-  if (window.triggerHaptic) {
-    window.triggerHaptic(type)
+  if ((window as any).triggerHaptic) {
+    (window as any).triggerHaptic(type)
   }
   
   // Console feedback for development
@@ -414,7 +477,7 @@ export function triggerHaptic(type = 'light') {
 /**
  * Brazilian mobile-optimized toast system
  */
-export function showToast(message, options = {}) {
+export function showToast(message: string, options: ToastOptions = {}): HTMLElement {
   const {
     type = 'info',
     duration = 3000,
@@ -425,7 +488,7 @@ export function showToast(message, options = {}) {
   
   // Trigger haptic based on toast type
   if (haptic) {
-    const hapticMap = {
+    const hapticMap: Record<ToastType, HapticType> = {
       success: 'success',
       error: 'error',
       warning: 'medium',
@@ -470,19 +533,19 @@ export function showToast(message, options = {}) {
   return toast
 }
 
-function getToastClasses(type, position) {
+function getToastClasses(type: ToastType, position: ToastPosition): string {
   const baseClasses = `
     fixed left-4 right-4 z-50 p-4 rounded-xl backdrop-blur-md border
     transform transition-all duration-300 ease-out opacity-0
     shadow-lg max-w-sm mx-auto
   `
   
-  const positionClasses = {
+  const positionClasses: Record<ToastPosition, string> = {
     top: 'top-20',
     bottom: 'bottom-20'
   }
   
-  const typeClasses = {
+  const typeClasses: Record<ToastType, string> = {
     success: 'bg-green-500/20 border-green-400/30 text-green-300',
     error: 'bg-red-500/20 border-red-400/30 text-red-300',
     warning: 'bg-yellow-500/20 border-yellow-400/30 text-yellow-300',
@@ -492,8 +555,8 @@ function getToastClasses(type, position) {
   return `${baseClasses} ${positionClasses[position]} ${typeClasses[type]}`
 }
 
-function getTypeEmoji(type) {
-  const emojis = {
+function getTypeEmoji(type: ToastType): string {
+  const emojis: Record<ToastType, string> = {
     success: '✅',
     error: '❌',
     warning: '⚠️',
@@ -506,15 +569,15 @@ function getTypeEmoji(type) {
  * Quick feedback functions for common Brazilian UX patterns
  */
 export const feedback = {
-  success: (message, emoji = '🎉') => showToast(message, { type: 'success', emoji }),
-  error: (message, emoji = '😬') => showToast(message, { type: 'error', emoji }),
-  loading: (message, emoji = '⏳') => showToast(message, { type: 'info', emoji, duration: 2000 }),
-  pix: (message) => showToast(message, { type: 'success', emoji: '💳' }),
-  win: (message) => {
+  success: (message: string, emoji = '🎉') => showToast(message, { type: 'success', emoji }),
+  error: (message: string, emoji = '😬') => showToast(message, { type: 'error', emoji }),
+  loading: (message: string, emoji = '⏳') => showToast(message, { type: 'info', emoji, duration: 2000 }),
+  pix: (message: string) => showToast(message, { type: 'success', emoji: '💳' }),
+  win: (message: string) => {
     triggerHaptic('success')
     return showToast(message, { type: 'success', emoji: '🏆', duration: 4000 })
   },
-  purchase: (message) => {
+  purchase: (message: string) => {
     triggerHaptic('medium')
     return showToast(message, { type: 'success', emoji: '🛒' })
   }
@@ -523,7 +586,7 @@ export const feedback = {
 /**
  * Scroll suave para elemento
  */
-export function scrollToElement(elementId, offset = 0) {
+export function scrollToElement(elementId: string, offset: number = 0): void {
   const element = document.getElementById(elementId)
   if (element) {
     const elementPosition = element.offsetTop - offset
@@ -537,7 +600,7 @@ export function scrollToElement(elementId, offset = 0) {
 /**
  * Verificar se element está visível
  */
-export function isElementVisible(element) {
+export function isElementVisible(element: Element): boolean {
   const rect = element.getBoundingClientRect()
   return (
     rect.top >= 0 &&
@@ -550,10 +613,10 @@ export function isElementVisible(element) {
 /**
  * Lazy load de imagem
  */
-export function preloadImage(src) {
+export function preloadImage(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const img = new Image()
-    img.onload = resolve
+    img.onload = () => resolve()
     img.onerror = reject
     img.src = src
   })
@@ -562,7 +625,7 @@ export function preloadImage(src) {
 /**
  * Formatar tempo restante
  */
-export function formatTimeRemaining(seconds) {
+export function formatTimeRemaining(seconds: number): string {
   if (seconds <= 0) return '00:00'
   
   const minutes = Math.floor(seconds / 60)
@@ -574,7 +637,7 @@ export function formatTimeRemaining(seconds) {
 /**
  * Calcular porcentagem de progresso
  */
-export function calculateProgress(current, total) {
+export function calculateProgress(current: number, total: number): number {
   if (total === 0) return 0
   return Math.min(100, Math.max(0, (current / total) * 100))
 }
@@ -582,7 +645,7 @@ export function calculateProgress(current, total) {
 /**
  * Safe JSON parse
  */
-export function safeJsonParse(str, defaultValue = null) {
+export function safeJsonParse<T = any>(str: string, defaultValue: T | null = null): T | null {
   try {
     return JSON.parse(str)
   } catch {
@@ -593,8 +656,8 @@ export function safeJsonParse(str, defaultValue = null) {
 /**
  * Local storage utilities
  */
-export const storage = {
-  get(key, defaultValue = null) {
+export const storage: StorageInterface = {
+  get<T = any>(key: string, defaultValue: T | null = null): T | null {
     try {
       const item = localStorage.getItem(key)
       return item ? JSON.parse(item) : defaultValue
@@ -603,7 +666,7 @@ export const storage = {
     }
   },
 
-  set(key, value) {
+  set(key: string, value: any): boolean {
     try {
       localStorage.setItem(key, JSON.stringify(value))
       return true
@@ -612,7 +675,7 @@ export const storage = {
     }
   },
 
-  remove(key) {
+  remove(key: string): boolean {
     try {
       localStorage.removeItem(key)
       return true
@@ -621,7 +684,7 @@ export const storage = {
     }
   },
 
-  clear() {
+  clear(): boolean {
     try {
       localStorage.clear()
       return true
@@ -634,13 +697,13 @@ export const storage = {
 /**
  * URL utilities
  */
-export function getUrlParam(param) {
+export function getUrlParam(param: string): string | null {
   const urlParams = new URLSearchParams(window.location.search)
   return urlParams.get(param)
 }
 
-export function setUrlParam(param, value) {
-  const url = new URL(window.location)
+export function setUrlParam(param: string, value: string): void {
+  const url = new URL(window.location.href)
   url.searchParams.set(param, value)
   window.history.pushState({}, '', url)
 }
@@ -648,10 +711,15 @@ export function setUrlParam(param, value) {
 /**
  * Animation utilities - LuxDrop inspired
  */
-export function animateValue(start, end, duration, callback) {
+export function animateValue(
+  start: number, 
+  end: number, 
+  duration: number, 
+  callback: (value: number) => void
+): void {
   const startTime = performance.now()
   
-  function animate(currentTime) {
+  function animate(currentTime: number) {
     const elapsed = currentTime - startTime
     const progress = Math.min(elapsed / duration, 1)
     
@@ -672,7 +740,7 @@ export function animateValue(start, end, duration, callback) {
 /**
  * Smooth card reveal animation (LuxDrop style)
  */
-export function animateCardReveal(element, delay = 0) {
+export function animateCardReveal(element: HTMLElement | null, delay: number = 0): void {
   if (!element) return
   
   element.style.opacity = '0'
@@ -688,17 +756,17 @@ export function animateCardReveal(element, delay = 0) {
 /**
  * Stagger animation for grids
  */
-export function staggerReveal(selector, delayBetween = 100) {
+export function staggerReveal(selector: string, delayBetween: number = 100): void {
   const elements = document.querySelectorAll(selector)
   elements.forEach((el, index) => {
-    animateCardReveal(el, index * delayBetween)
+    animateCardReveal(el as HTMLElement, index * delayBetween)
   })
 }
 
 /**
  * Scroll-triggered animations
  */
-export function observeAnimations() {
+export function observeAnimations(): void {
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {

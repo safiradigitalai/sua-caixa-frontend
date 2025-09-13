@@ -2,8 +2,16 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '../../lib/utils'
 
+// Tipos base
+interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
+  className?: string
+}
+
+type LoadingSpinnerSize = 'sm' | 'md' | 'lg' | 'xl'
+type ListSkeletonType = 'box' | 'item' | 'ganhador'
+
 // Skeleton base
-const Skeleton = ({ className, ...props }) => (
+const Skeleton = ({ className, ...props }: SkeletonProps) => (
   <div
     className={cn("animate-pulse rounded-md bg-gray-700", className)}
     {...props}
@@ -11,7 +19,11 @@ const Skeleton = ({ className, ...props }) => (
 )
 
 // Skeleton para BoxCard
-export const BoxCardSkeleton = ({ featured = false }) => (
+interface BoxCardSkeletonProps {
+  featured?: boolean
+}
+
+export const BoxCardSkeleton = ({ featured = false }: BoxCardSkeletonProps) => (
   <div className={cn(
     "bg-dark-50 border border-gray-700 rounded-2xl overflow-hidden",
     featured && "col-span-2"
@@ -53,7 +65,11 @@ export const BoxCardSkeleton = ({ featured = false }) => (
 )
 
 // Skeleton para ItemCard
-export const ItemCardSkeleton = ({ compact = false }) => (
+interface ItemCardSkeletonProps {
+  compact?: boolean
+}
+
+export const ItemCardSkeleton = ({ compact = false }: ItemCardSkeletonProps) => (
   <div className="bg-dark-50 border border-gray-700 rounded-xl overflow-hidden">
     {/* Image */}
     <Skeleton className={cn(
@@ -99,7 +115,12 @@ export const GanhadorSkeleton = () => (
 )
 
 // Skeleton para página completa
-export const PageSkeleton = ({ title, showHeader = true }) => (
+interface PageSkeletonProps {
+  title?: string
+  showHeader?: boolean
+}
+
+export const PageSkeleton = ({ title, showHeader = true }: PageSkeletonProps) => (
   <div className="min-h-screen bg-dark-100">
     {showHeader && (
       <div className="p-4 border-b border-gray-700">
@@ -120,7 +141,12 @@ export const PageSkeleton = ({ title, showHeader = true }) => (
 )
 
 // Skeleton para grid de caixas
-export const CaixasGridSkeleton = ({ count = 6, featured = 1 }) => (
+interface CaixasGridSkeletonProps {
+  count?: number
+  featured?: number
+}
+
+export const CaixasGridSkeleton = ({ count = 6, featured = 1 }: CaixasGridSkeletonProps) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
     {Array.from({ length: count }, (_, i) => (
       <BoxCardSkeleton 
@@ -163,8 +189,13 @@ export const TransparenciaSkeleton = () => (
 )
 
 // Loading com animação
-export const LoadingSpinner = ({ size = 'md', className = '' }) => {
-  const sizes = {
+interface LoadingSpinnerProps {
+  size?: LoadingSpinnerSize
+  className?: string
+}
+
+export const LoadingSpinner = ({ size = 'md', className = '' }: LoadingSpinnerProps) => {
+  const sizes: Record<LoadingSpinnerSize, string> = {
     sm: 'w-4 h-4',
     md: 'w-6 h-6',
     lg: 'w-8 h-8',
@@ -185,11 +216,17 @@ export const LoadingSpinner = ({ size = 'md', className = '' }) => {
 }
 
 // Loading state para listas
+interface ListLoadingSkeletonProps {
+  count?: number
+  type?: ListSkeletonType
+  className?: string
+}
+
 export const ListLoadingSkeleton = ({ 
   count = 5, 
   type = 'box', 
   className = '' 
-}) => (
+}: ListLoadingSkeletonProps) => (
   <div className={cn("space-y-4", className)}>
     {Array.from({ length: count }, (_, i) => {
       switch (type) {
@@ -206,7 +243,11 @@ export const ListLoadingSkeleton = ({
 )
 
 // Loading fullscreen
-export const FullScreenLoading = ({ message = 'Carregando...' }) => (
+interface FullScreenLoadingProps {
+  message?: string
+}
+
+export const FullScreenLoading = ({ message = 'Carregando...' }: FullScreenLoadingProps) => (
   <div className="fixed inset-0 bg-dark-100 flex flex-col items-center justify-center z-50">
     <div className="text-center">
       <LoadingSpinner size="xl" className="mb-4" />

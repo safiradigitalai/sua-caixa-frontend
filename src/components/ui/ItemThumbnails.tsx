@@ -1,10 +1,35 @@
 import React from 'react'
 import { cn } from '../../lib/utils'
+import type { Raridade } from '../../types'
 
 // Sistema de thumbnails profissionais para itens baseado em raridade e tipo
 // Cada thumbnail tem um design único temático casino/brutalist
 
-const BaseThumbnail = ({ children, className = "", variant = "default", rarity = "comum" }) => {
+// Interfaces
+interface BaseThumbnailProps {
+  children: React.ReactNode
+  className?: string
+  variant?: string
+  rarity: Raridade
+}
+
+interface ThumbnailProps {
+  nome: string
+  raridade?: Raridade
+  className?: string
+}
+
+interface SmartItemThumbnailProps {
+  nome: string
+  tipo: string
+  raridade?: Raridade
+  imagemUrl?: string
+  className?: string
+}
+
+type ThumbnailComponent = React.FC<ThumbnailProps>
+
+const BaseThumbnail: React.FC<BaseThumbnailProps> = ({ children, className = "", variant = "default", rarity = "comum" }) => {
   const rarityColors = {
     comum: "from-gray-700 to-gray-800",
     raro: "from-cyan-800 to-cyan-900", 
@@ -40,7 +65,7 @@ const BaseThumbnail = ({ children, className = "", variant = "default", rarity =
 }
 
 // Thumbnail para Eletrônicos
-export const EletronicThumbnail = ({ nome, raridade = "comum", className = "" }) => (
+export const EletronicThumbnail: React.FC<ThumbnailProps> = ({ nome, raridade = "comum", className = "" }) => (
   <BaseThumbnail rarity={raridade} className={className}>
     <svg viewBox="0 0 64 64" className="w-12 h-12 text-gray-200 mb-2">
       <rect x="8" y="16" width="48" height="32" rx="4" fill="currentColor" stroke="white" strokeWidth="2"/>
@@ -58,7 +83,7 @@ export const EletronicThumbnail = ({ nome, raridade = "comum", className = "" })
 )
 
 // Thumbnail para Acessórios
-export const AccessoryThumbnail = ({ nome, raridade = "comum", className = "" }) => (
+export const AccessoryThumbnail: React.FC<ThumbnailProps> = ({ nome, raridade = "comum", className = "" }) => (
   <BaseThumbnail rarity={raridade} className={className}>
     <svg viewBox="0 0 64 64" className="w-12 h-12 text-gray-200 mb-2">
       <circle cx="32" cy="32" r="20" fill="none" stroke="currentColor" strokeWidth="3"/>
@@ -80,7 +105,7 @@ export const AccessoryThumbnail = ({ nome, raridade = "comum", className = "" })
 )
 
 // Thumbnail para Vestuário
-export const ClothingThumbnail = ({ nome, raridade = "comum", className = "" }) => (
+export const ClothingThumbnail: React.FC<ThumbnailProps> = ({ nome, raridade = "comum", className = "" }) => (
   <BaseThumbnail rarity={raridade} className={className}>
     <svg viewBox="0 0 64 64" className="w-12 h-12 text-gray-200 mb-2">
       <path d="M20 12h24v8l-4 4v32H24V24l-4-4V12z" fill="currentColor" stroke="white" strokeWidth="2"/>
@@ -98,7 +123,7 @@ export const ClothingThumbnail = ({ nome, raridade = "comum", className = "" }) 
 )
 
 // Thumbnail para Casa/Decoração
-export const HomeThumbnail = ({ nome, raridade = "comum", className = "" }) => (
+export const HomeThumbnail: React.FC<ThumbnailProps> = ({ nome, raridade = "comum", className = "" }) => (
   <BaseThumbnail rarity={raridade} className={className}>
     <svg viewBox="0 0 64 64" className="w-12 h-12 text-gray-200 mb-2">
       <path d="M8 32l24-16 24 16v24H40V40H24v16H8V32z" fill="currentColor" stroke="white" strokeWidth="2"/>
@@ -116,7 +141,7 @@ export const HomeThumbnail = ({ nome, raridade = "comum", className = "" }) => (
 )
 
 // Thumbnail para Beleza/Cuidados
-export const BeautyThumbnail = ({ nome, raridade = "comum", className = "" }) => (
+export const BeautyThumbnail: React.FC<ThumbnailProps> = ({ nome, raridade = "comum", className = "" }) => (
   <BaseThumbnail rarity={raridade} className={className}>
     <svg viewBox="0 0 64 64" className="w-12 h-12 text-gray-200 mb-2">
       <ellipse cx="32" cy="20" rx="12" ry="8" fill="currentColor" stroke="white" strokeWidth="2"/>
@@ -137,7 +162,7 @@ export const BeautyThumbnail = ({ nome, raridade = "comum", className = "" }) =>
 )
 
 // Thumbnail para Esportes
-export const SportsThumbnail = ({ nome, raridade = "comum", className = "" }) => (
+export const SportsThumbnail: React.FC<ThumbnailProps> = ({ nome, raridade = "comum", className = "" }) => (
   <BaseThumbnail rarity={raridade} className={className}>
     <svg viewBox="0 0 64 64" className="w-12 h-12 text-gray-200 mb-2">
       <circle cx="32" cy="32" r="24" fill="none" stroke="currentColor" strokeWidth="3"/>
@@ -154,7 +179,7 @@ export const SportsThumbnail = ({ nome, raridade = "comum", className = "" }) =>
 )
 
 // Thumbnail genérico para outros/desconhecidos
-export const DefaultItemThumbnail = ({ nome, raridade = "comum", className = "" }) => (
+export const DefaultItemThumbnail: React.FC<ThumbnailProps> = ({ nome, raridade = "comum", className = "" }) => (
   <BaseThumbnail rarity={raridade} className={className}>
     <svg viewBox="0 0 64 64" className="w-12 h-12 text-gray-200 mb-2">
       <rect x="16" y="16" width="32" height="32" rx="8" fill="currentColor" stroke="white" strokeWidth="2"/>
@@ -174,8 +199,8 @@ export const DefaultItemThumbnail = ({ nome, raridade = "comum", className = "" 
 )
 
 // Função para selecionar thumbnail baseado no tipo do item
-export const getThumbnailByType = (tipo) => {
-  const typeMap = {
+export const getThumbnailByType = (tipo: string): ThumbnailComponent => {
+  const typeMap: Record<string, ThumbnailComponent> = {
     'eletronicos': EletronicThumbnail,
     'electronic': EletronicThumbnail,
     'smartphone': EletronicThumbnail,
@@ -203,9 +228,9 @@ export const getThumbnailByType = (tipo) => {
 }
 
 // Componente principal que seleciona automaticamente com fallback elegante
-export const SmartItemThumbnail = ({ nome, tipo, raridade = "comum", imagemUrl, className = "" }) => {
-  const [imageError, setImageError] = React.useState(false)
-  const [imageLoaded, setImageLoaded] = React.useState(false)
+export const SmartItemThumbnail: React.FC<SmartItemThumbnailProps> = ({ nome, tipo, raridade = "comum", imagemUrl, className = "" }) => {
+  const [imageError, setImageError] = React.useState<boolean>(false)
+  const [imageLoaded, setImageLoaded] = React.useState<boolean>(false)
   
   // Seleciona thumbnail baseado no tipo
   const ThumbnailComponent = getThumbnailByType(tipo)

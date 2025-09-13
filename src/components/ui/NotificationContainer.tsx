@@ -1,15 +1,23 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react'
+import { X, CheckCircle, AlertCircle, Info, AlertTriangle, LucideIcon } from 'lucide-react'
 
 // Hooks
 import { useNotifications } from '../../stores/useAppStore'
 import { triggerHaptic, cn } from '../../lib/utils'
+import type { ToastType } from '../../types'
 
-const NotificationContainer = () => {
+// Tipos para estilos de notificação
+interface NotificationStyles {
+  bg: string
+  border: string
+  icon: string
+}
+
+const NotificationContainer: React.FC = () => {
   const { notifications, removeNotification } = useNotifications()
 
-  const getNotificationIcon = (type) => {
+  const getNotificationIcon = (type: ToastType): LucideIcon => {
     switch (type) {
       case 'success':
         return CheckCircle
@@ -23,7 +31,7 @@ const NotificationContainer = () => {
     }
   }
 
-  const getNotificationStyles = (type) => {
+  const getNotificationStyles = (type: ToastType): NotificationStyles => {
     switch (type) {
       case 'success':
         return {
@@ -53,7 +61,7 @@ const NotificationContainer = () => {
     }
   }
 
-  const handleDismiss = (id) => {
+  const handleDismiss = (id: string): void => {
     triggerHaptic('light')
     removeNotification(id)
   }
@@ -101,6 +109,7 @@ const NotificationContainer = () => {
                       <button
                         onClick={notification.action.handler}
                         className="mt-2 text-white/80 hover:text-white text-sm font-medium underline"
+                        type="button"
                       >
                         {notification.action.label}
                       </button>
@@ -111,6 +120,7 @@ const NotificationContainer = () => {
                   <button
                     onClick={() => handleDismiss(notification.id)}
                     className="shrink-0 p-1 text-white/60 hover:text-white transition-colors duration-150 rounded-lg hover:bg-white/10"
+                    type="button"
                     aria-label="Fechar notificação"
                   >
                     <X className="w-4 h-4" />

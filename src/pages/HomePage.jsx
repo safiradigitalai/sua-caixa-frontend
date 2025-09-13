@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { 
@@ -52,14 +52,17 @@ const HomePage = () => {
   const { user } = useUser()
   const { addNotification } = useNotifications()
 
+  // Callback estável para evitar loop infinito
+  const handleApiError = useCallback((error) => {
+    addNotification({
+      type: 'error',
+      message: 'Erro ao carregar dados da página inicial'
+    })
+  }, [addNotification])
+
   // Buscar dados da home
   const { data: homeData, loading, error, refetch } = useApi('/home', {
-    onError: (error) => {
-      addNotification({
-        type: 'error',
-        message: 'Erro ao carregar dados da página inicial'
-      })
-    }
+    onError: handleApiError
   })
 
   const {

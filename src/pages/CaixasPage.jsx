@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Search, 
@@ -53,20 +53,26 @@ const CaixasPage = () => {
   const debouncedSearch = useDebounce(searchTerm, 300)
   const { addNotification } = useNotifications()
 
-  // Buscar caixas
+  // Callback estável com dependências corretas
+  const handleApiError = useCallback((error) => {
+    addNotification({
+      type: 'error',
+      message: 'Erro ao carregar caixas'
+    })
+  }, [addNotification])
+
+  // Params estável para evitar loop infinito
+  const apiParams = useMemo(() => ({
+    search: debouncedSearch,
+    raridade: selectedRaridade,
+    faixaPreco: selectedFaixaPreco,
+    orderBy: sortBy
+  }), [debouncedSearch, selectedRaridade, selectedFaixaPreco, sortBy])
+
+  // Buscar caixas com tratamento de erro corrigido
   const { data: caixasData, loading, error, refetch } = useApi('/caixas', {
-    params: {
-      search: debouncedSearch,
-      raridade: selectedRaridade,
-      faixaPreco: selectedFaixaPreco,
-      orderBy: sortBy
-    },
-    onError: (error) => {
-      addNotification({
-        type: 'error',
-        message: 'Erro ao carregar caixas'
-      })
-    }
+    params: apiParams,
+    onError: handleApiError
   })
 
   const { caixas = [], filtros = {} } = caixasData || {}
@@ -113,6 +119,12 @@ const CaixasPage = () => {
     
     return filtered
   }, [caixas, searchTerm, debouncedSearch])
+
+  // String estável para evitar re-renders
+  const headerSubtitle = useMemo(() => 
+    `${processedCaixas.length} caixas épicas disponíveis • Open • Play • Win • UPDATED!`, 
+    [processedCaixas.length]
+  )
 
   // Handlers
   const handleCaixaClick = (caixa) => {
@@ -172,7 +184,7 @@ const CaixasPage = () => {
         <GamingContainer 
           variant="primary" 
           headerTitle="GAMING BOXES" 
-          headerSubtitle={`${processedCaixas.length} caixas épicas disponíveis • Open • Play • Win • UPDATED!`}
+          headerSubtitle={headerSubtitle}
           headerIcon={Package}
           className="mx-4 mt-4"
           backgroundPattern={true}
